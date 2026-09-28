@@ -84,8 +84,11 @@ git -C "$work/pages" add -A
 git -C "$work/pages" commit --quiet -m "Appcast: $version"
 git -C "$work/pages" push --quiet origin gh-pages
 
-# GitHub Pages einmalig für gh-pages einschalten.
-gh api "repos/$REPO/pages" >/dev/null 2>&1 ||
-    gh api -X POST "repos/$REPO/pages" -f 'source[branch]=gh-pages' -f 'source[path]=/' >/dev/null
+# GitHub Pages einmalig für gh-pages einschalten. Oft hat GitHub das beim ersten Push auf
+# gh-pages schon selbst getan und antwortet dann mit 409.
+if ! gh api "repos/$REPO/pages" >/dev/null 2>&1; then
+    gh api -X POST "repos/$REPO/pages" -f 'source[branch]=gh-pages' -f 'source[path]=/' >/dev/null 2>&1 ||
+        gh api "repos/$REPO/pages" >/dev/null || fail "GitHub Pages ließ sich nicht einschalten."
+fi
 
 echo "Veröffentlicht: $tag · Feed $FEED (GitHub Pages braucht ein bis zwei Minuten)"
