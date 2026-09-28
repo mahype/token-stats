@@ -90,33 +90,22 @@ struct Screenshots {
 
     // MARK: Zeichnen
 
+    /// Zeichnet in 3× als Vektor, unabhängig vom Bildschirm – scharf auch in der halb breiten
+    /// README-Tabelle. Über ein Offscreen-Fenster käme auf einem Nicht-Retina-Bildschirm nur
+    /// ein hochskaliertes 1×-Bild heraus.
     private func render(_ view: some View, _ appearance: NSAppearance.Name, to url: URL) async throws {
-        let hosting = NSHostingView(rootView: view)
-        hosting.frame.size = hosting.fittingSize
-        let window = NSWindow(contentRect: hosting.frame, styleMask: .borderless, backing: .buffered, defer: false)
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.contentView = hosting
-        window.appearance = NSAppearance(named: appearance)
-        window.isReleasedWhenClosed = false
-        // Außerhalb des sichtbaren Bereichs, aber eingeblendet – sonst zeichnet SwiftUI nicht.
-        window.setFrameOrigin(NSPoint(x: -20_000, y: -20_000))
-        window.orderFront(nil)
-        defer { window.orderOut(nil) }
-        try await Task.sleep(for: .milliseconds(600))
-        hosting.layoutSubtreeIfNeeded()
-
-        // Immer 2×: offscreen hängt das Fenster an keinem Retina-Bildschirm.
-        let scale: CGFloat = 2
-        let bounds = hosting.bounds
-        guard let rep = NSBitmapImageRep(
-            bitmapDataPlanes: nil, pixelsWide: Int(bounds.width * scale), pixelsHigh: Int(bounds.height * scale),
-            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
-            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
-        ) else { throw CocoaError(.fileWriteUnknown) }
-        rep.size = bounds.size
-        hosting.cacheDisplay(in: bounds, to: rep)
-        guard let data = rep.representation(using: .png, properties: [:]) else { throw CocoaError(.fileWriteUnknown) }
+        let scheme: ColorScheme = appearance == .darkAqua ? .dark : .light
+        let renderer = ImageRenderer(content: view.environment(\.colorScheme, scheme))
+        renderer.scale = 3
+        renderer.isOpaque = false
+        var image: CGImage?
+        // Dynamische NSColors (Zustandsfarben, Fensterhintergrund) lösen über die aktuelle Appearance auf.
+        NSAppearance(named: appearance)!.performAsCurrentDrawingAppearance {
+            image = renderer.cgImage
+        }
+        guard let image,
+              let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:])
+        else { throw CocoaError(.fileWriteUnknown) }
         try data.write(to: url)
         print(url.lastPathComponent)
     }
