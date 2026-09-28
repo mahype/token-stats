@@ -5,8 +5,8 @@ import SwiftUI
 /// `make screenshots`: rendert Popover und Menüleisten-Symbol als PNG für die README.
 ///
 /// Die App zeichnet ihre eigenen Views, deshalb braucht das keine Freigabe für
-/// Bildschirmaufnahme. Limits kommen aus festen Demo-Werten (keine Abfrage, kein Cache,
-/// keine Kontonamen), der Verbrauch aus dem echten Ledger.
+/// Bildschirmaufnahme. Limits und Verbrauch sind Demo-Werte: keine Abfrage, kein Cache,
+/// keine Logs, keine Kontonamen.
 @MainActor
 struct Screenshots {
     let store: UsageStore
@@ -26,10 +26,14 @@ struct Screenshots {
         }
     }
 
+    /// Demo-Werte für Limits und Verbrauch; nichts wird abgefragt oder aus den Logs gelesen.
+    func showDemo(now: Date = .now) {
+        store.showDemo(Self.demoSnapshots(now: now))
+        consumption.showDemo(Self.demoUsage(now: now, billingDay: settings.billingDay, prices: consumption.prices))
+    }
+
     private func capture(into directory: URL) async throws {
-        store.showDemo(Self.demoSnapshots(now: .now))
-        consumption.refresh()
-        while !consumption.hasScannedOnce { try await Task.sleep(for: .milliseconds(200)) }
+        showDemo()
 
         for (suffix, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
             func file(_ name: String) -> URL { directory.appending(path: "\(name)-\(suffix).png") }
@@ -150,6 +154,48 @@ struct Screenshots {
                 fetchedAt: now.addingTimeInterval(-60)
             ),
         ]
+    }
+
+    /// 30 Tage Verbrauch mit Wochenrhythmus; Cache-Anteil wie bei Claude Code üblich um 80 %.
+    static func demoUsage(now: Date, billingDay: Int, prices: PriceTable,
+                          calendar: Calendar = .current) -> [String: [UsagePeriod: UsageSummary]] {
+        // Tagesfaktoren, heute zuletzt; die Nullen sind freie Tage.
+        let pattern: [Double] = [0.9, 1.2, 0.7, 1.4, 0.3, 0, 0.5, 1.1, 1.3, 0.8, 1.6, 0.9, 0.2, 0,
+                                 1.0, 0.6, 1.5, 1.2, 0.7, 0.4, 0.1, 1.3, 0.9, 1.1, 1.8, 1.0, 0, 0.6, 1.4, 0.8]
+        let models: [String: [(model: String, share: Double, perDay: TokenCounts)]] = [
+            "claude": [
+                ("claude-opus-5-5", 0.7, TokenCounts(input: 9_000, output: 310_000, cacheWrite5m: 1_900_000,
+                                                     cacheWrite1h: 600_000, cacheRead: 38_000_000)),
+                ("claude-sonnet-5", 0.3, TokenCounts(input: 14_000, output: 240_000, cacheWrite5m: 1_400_000,
+                                                     cacheWrite1h: 0, cacheRead: 21_000_000)),
+            ],
+            "codex": [
+                ("gpt-5.6-sol", 1, TokenCounts(input: 1_100_000, output: 180_000, cacheRead: 9_500_000)),
+            ],
+        ]
+        let today = calendar.startOfDay(for: now)
+        func scaled(_ counts: TokenCounts, _ factor: Double) -> TokenCounts {
+            func s(_ value: Int) -> Int { Int(Double(value) * factor) }
+            return TokenCounts(input: s(counts.input), output: s(counts.output), cacheWrite5m: s(counts.cacheWrite5m),
+                               cacheWrite1h: s(counts.cacheWrite1h), cacheRead: s(counts.cacheRead))
+        }
+
+        return models.mapValues { lines in
+            let rows = pattern.enumerated().flatMap { index, factor in
+                let day = calendar.date(byAdding: .day, value: index - (pattern.count - 1), to: today)!
+                return lines.map { line in
+                    UsageLedger.Row(day: UsageSummary.key(day, calendar), model: line.model,
+                                    counts: scaled(line.perDay, factor * line.share * 2))
+                }
+            }
+            return Dictionary(uniqueKeysWithValues: UsagePeriod.allCases.map { period in
+                let range = period.range(now: now, billingDay: billingDay, calendar: calendar)
+                let from = UsageSummary.key(range.from, calendar), through = UsageSummary.key(range.through, calendar)
+                let inRange = rows.filter { $0.day >= from && $0.day <= through }
+                return (period, UsageSummary.build(rows: inRange, from: range.from, through: range.through,
+                                                   prices: prices, calendar: calendar))
+            })
+        }
     }
 }
 #endif

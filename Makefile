@@ -22,7 +22,7 @@ run: build
 	@while pgrep -qx "Token Stats"; do sleep 0.2; done; sleep 1
 	open "$(APP)"
 
-# Rendert die README-Bilder nach screenshots/ (Demo-Limits, echter Verbrauch).
+# Rendert die README-Bilder nach screenshots/ (nur Demo-Werte).
 screenshots: build
 	-pkill -x "Token Stats"
 	@while pgrep -qx "Token Stats"; do sleep 0.2; done

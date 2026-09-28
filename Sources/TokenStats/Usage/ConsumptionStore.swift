@@ -124,6 +124,15 @@ final class ConsumptionStore {
         summaries[provider]?[period]
     }
 
+    #if DEBUG
+    /// Nur für Screenshots: feste Zusammenfassungen, ohne die Logs zu lesen.
+    func showDemo(_ demo: [String: [UsagePeriod: UsageSummary]]) {
+        timer?.invalidate()
+        summaries = demo
+        hasScannedOnce = true
+    }
+    #endif
+
     func refresh() {
         guard let ledger, !isScanning else { return }
         isScanning = true

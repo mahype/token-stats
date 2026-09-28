@@ -28,11 +28,12 @@ und fragt nach einem Neustart erst nach Ablauf des Intervalls wieder ab — häu
 
 `make test` startet die App als Test-Host und beendet dabei eine laufende Instanz —
 danach `make run`. Preistabelle aktualisieren: `Scripts/update-pricing.sh`.
-README-Bilder neu rendern: `make screenshots` (nur Debug-Build; Demo-Limits, echter
-Verbrauch; Hell und Dunkel). Braucht keine Bildschirmaufnahme-Freigabe, weil die App
+README-Bilder neu rendern: `make screenshots` (nur Debug-Build; Hell und Dunkel). Alle
+Werte sind Demo-Werte (`Screenshots.swift`) – für Screenshots nie echte Limits, Logs oder
+Kontonamen verwenden. Braucht keine Bildschirmaufnahme-Freigabe, weil die App
 ihre Views selbst zeichnet. Ausnahme Einstellungen: Offscreen zeichnet AppKit die Schalter
-grau, darum echt aufnehmen – App mit `TOKENSTATS_OPEN_SETTINGS=1` starten (öffnet das
-Fenster, nur Debug), Fenster-ID per `CGWindowListCopyWindowInfo` holen,
+grau, darum echt aufnehmen – App mit `TOKENSTATS_OPEN_SETTINGS=1` starten (Demo-Werte,
+keine Abfrage, öffnet das Fenster; nur Debug), Fenster-ID per `CGWindowListCopyWindowInfo` holen,
 `screencapture -x -o -l <id>`, je einmal im hellen und dunklen Modus. Braucht die
 Freigabe „Bildschirmaufnahme“ für das Terminal.
 

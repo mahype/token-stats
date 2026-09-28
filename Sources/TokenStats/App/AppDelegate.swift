@@ -34,13 +34,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.behavior = .transient
         popover.animates = false
 
+        #if DEBUG
+        // Für Screenshots: Demo-Werte statt Abfrage und Logs, Einstellungen gleich offen.
+        if ProcessInfo.processInfo.environment["TOKENSTATS_OPEN_SETTINGS"] != nil {
+            Screenshots(store: store, consumption: consumption, settings: settings).showDemo()
+            observeIcon()
+            openSettings()
+            return
+        }
+        #endif
+
         observeIcon()
         store.start()
         consumption.start()
-        #if DEBUG
-        // Für `make screenshots`: Einstellungen gleich öffnen, ohne Klick aufs Symbol.
-        if ProcessInfo.processInfo.environment["TOKENSTATS_OPEN_SETTINGS"] != nil { openSettings() }
-        #endif
     }
 
     // MARK: Symbol

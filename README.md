@@ -86,7 +86,7 @@ Die Einstellungen – Anzeige, Stichtag des Abos und Abfrageintervall:
   </picture>
 </p>
 
-<sub>Die Limits in den Screenshots sind Demo-Werte, der Verbrauch ist echt.</sub>
+<sub>Alle Werte in den Screenshots sind Demo-Werte.</sub>
 
 ## Anbieter
 
