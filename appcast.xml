@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+  <channel>
+    <title>Token Stats</title>
+    <link>https://mahype.github.io/token-stats/appcast.xml</link>
+    <language>de</language>
+    <item>
+      <title>Version 0.2.0</title>
+      <pubDate>Mon, 28 Sep 2026 20:40:00 GMT</pubDate>
+      <sparkle:version>0.2.0</sparkle:version>
+      <sparkle:shortVersionString>0.2.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description>&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Automatische Updates:&lt;/strong&gt; Token Stats sucht einmal täglich nach einer neuen Version und installiert sie beim Beenden. Abschaltbar unter Einstellungen → Updates, dort auch „Jetzt suchen“. Ab dieser Version ist kein manueller Download mehr nötig.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Pace als Fläche:&lt;/strong&gt; Der Abstand zwischen Verbrauch und Zeitmarke ist im Balken schraffiert und darunter in Zeit umgerechnet – „1 Tag vorgegriffen“, „4 Tage ungenutzt“ oder „im Takt“ statt „18 Pkt. über Plan“.&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <enclosure url="https://github.com/mahype/token-stats/releases/download/v0.2.0/Token-Stats-0.2.0.dmg" length="2035397" type="application/octet-stream" sparkle:edSignature="LV8RvF27SK+PxOdbD+7DHO0A4BLK85SZ6zOrJE+4lozYUzoVsKSmGJybBBvCZ8sefaZvh3AbXXvO3C8sAOnxDg==" />
+    </item>
+  </channel>
+</rss>
