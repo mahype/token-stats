@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Ergänzt die von Xcode erzeugte Info.plist um die Sparkle-Schlüssel (SPEC §7). -->
+<plist version="1.0">
+<dict>
+    <key>SUFeedURL</key>
+    <string>https://mahype.github.io/token-stats/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>ZZB6IRFHcKbhOmxq4+7cKEnwZ+zXYXnRh2bwLCSwBDM=</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUAutomaticallyUpdate</key>
+    <true/>
+    <key>SUScheduledCheckInterval</key>
+    <integer>86400</integer>
+    <key>SUEnableSystemProfiling</key>
+    <false/>
+</dict>
+</plist>

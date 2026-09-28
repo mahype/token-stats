@@ -7,7 +7,7 @@ RELEASE_APP := $(BUILD_DIR)/Build/Products/Release/Token Stats.app
 VERSION := $(shell sed -n 's/.*MARKETING_VERSION: "\(.*\)"/\1/p' project.yml)
 DMG := $(BUILD_DIR)/Token-Stats-$(VERSION).dmg
 
-.PHONY: project build test run screenshots release clean
+.PHONY: project build test run screenshots release publish clean
 
 project:
 	xcodegen generate --quiet
@@ -43,6 +43,7 @@ release: project
 		-derivedDataPath $(BUILD_DIR) -quiet build \
 		CODE_SIGN_IDENTITY="$(SIGN_IDENTITY)" DEVELOPMENT_TEAM=$(TEAM_ID) \
 		OTHER_CODE_SIGN_FLAGS=--timestamp CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
+	Scripts/sign-sparkle.sh "$(RELEASE_APP)" "$(SIGN_IDENTITY)"
 	codesign --verify --strict --deep "$(RELEASE_APP)"
 	Scripts/make-dmg.sh "$(RELEASE_APP)" "$(DMG)"
 	codesign --sign "$(SIGN_IDENTITY)" --timestamp "$(DMG)"
@@ -50,6 +51,10 @@ release: project
 	xcrun stapler staple "$(DMG)"
 	spctl --assess --type open --context context:primary-signature -vv "$(DMG)"
 	shasum -a 256 "$(DMG)"
+
+# Tag, GitHub-Release und Sparkle-Appcast für das DMG aus `make release`.
+publish:
+	Scripts/publish.sh
 
 clean:
 	rm -rf $(BUILD_DIR) TokenStats.xcodeproj

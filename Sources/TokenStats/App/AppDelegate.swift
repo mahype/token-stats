@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = AppSettings()
     private lazy var store = UsageStore(providers: [ClaudeProvider(), CodexProvider()], settings: settings)
     private lazy var consumption = ConsumptionStore(settings: settings)
+    private let updater = Updater()
 
     private var statusItem: NSStatusItem!
     private let popover = NSPopover()
@@ -128,6 +129,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(loginItem)
 
         menu.addItem(.separator())
+        if updater.isAvailable {
+            menu.addItem(withTitle: "Nach Updates suchen …", action: #selector(checkForUpdates), keyEquivalent: "").target = self
+        }
         menu.addItem(withTitle: "Einstellungen …", action: #selector(openSettings), keyEquivalent: ",").target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Token Stats beenden", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -148,10 +152,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func toggleLaunchAtLogin() { settings.launchAtLogin.toggle() }
 
+    @objc private func checkForUpdates() { updater.checkNow() }
+
     @objc private func openSettings() {
         popover.performClose(nil)
         if settingsWindow == nil {
-            let controller = NSHostingController(rootView: SettingsView(settings: settings, store: store, consumption: consumption))
+            let controller = NSHostingController(rootView: SettingsView(
+                settings: settings, store: store, consumption: consumption, updater: updater
+            ))
             controller.sizingOptions = .preferredContentSize
             let window = NSWindow(contentViewController: controller)
             window.title = "Einstellungen"

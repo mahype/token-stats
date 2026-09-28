@@ -143,7 +143,8 @@ Eigenes Fenster, Abschnitt **Anzeige**:
   API-Vergleichswert in Geld anzeigen · Bei Anmeldung starten
 
 Weitere Abschnitte: **Anbieter** (je Client an/aus, Reihenfolge), **Mitteilungen**
-(Schwellen), **Aktualisierung** (Intervall, mindestens 300 s).
+(Schwellen), **Aktualisierung** (Intervall, mindestens 300 s), **Updates** (automatisch
+suchen an/aus, „Jetzt suchen“, installierte Version, letzte Suche).
 
 Die Geld-Anzeige ist abschaltbar, weil Tokenzahlen belastbar sind, der Geldbetrag
 aber eine Modellrechnung ist.
@@ -281,7 +282,13 @@ struct LimitWindow {
   inkrementell eingelesen (Offset je Datei merken) und pro Tag/Modell aggregiert in einer
   kleinen SQLite-Datei gehalten — nicht bei jedem Öffnen neu geparst.
 - Zugangsdaten werden **nur gelesen**, nie kopiert, nie ins App-Verzeichnis gespiegelt.
-  Es werden ausschließlich die Anbieter-Endpunkte kontaktiert.
+  Es werden ausschließlich die Anbieter-Endpunkte kontaktiert – plus der Update-Feed.
+- **Updates über Sparkle:** einmal täglich `https://mahype.github.io/token-stats/appcast.xml`,
+  ohne Systemprofil (`SUEnableSystemProfiling` aus); das DMG kommt von GitHub-Releases und
+  ist mit Ed25519 signiert, installiert wird beim Beenden. Einzige Verbindung außer den
+  Anbieter-Endpunkten, darum abschaltbar. Debug-Builds prüfen nicht, sonst ersetzte
+  `make run` sich selbst durch das letzte Release. `CFBundleVersion` = `MARKETING_VERSION`,
+  weil Sparkle diese Nummer mit dem Appcast vergleicht.
 - Account-Wechsel: inaktive Logins im Schlüsselbund verwahren, Backups der letzten 10
   behalten, Wechsel blockieren solange eine Session läuft (PID-Prüfung analog
   `~/.claude/sessions/<pid>.json`).

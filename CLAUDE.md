@@ -37,9 +37,14 @@ keine Abfrage, öffnet das Fenster; nur Debug), Fenster-ID per `CGWindowListCopy
 `screencapture -x -o -l <id>`, je einmal im hellen und dunklen Modus. Braucht die
 Freigabe „Bildschirmaufnahme“ für das Terminal.
 
-Release: `MARKETING_VERSION` in `project.yml` hochsetzen, `make release` (Universal-DMG in
-`build/`, mit „Developer ID Application: Sven Wagener (2GA7DQ3P3Z)“ signiert, notarisiert
-und gestapelt), Tag `vX.Y.Z` pushen, `gh release create vX.Y.Z build/Token-Stats-X.Y.Z.dmg`.
+Release: `MARKETING_VERSION` in `project.yml` hochsetzen, Abschnitt `## X.Y.Z` in
+`CHANGELOG.md` schreiben, committen, `make release` (Universal-DMG in `build/`, mit
+„Developer ID Application: Sven Wagener (2GA7DQ3P3Z)“ signiert, notarisiert und gestapelt),
+dann `make publish` (Tag, GitHub-Release, Sparkle-Appcast auf `gh-pages` → GitHub Pages).
+Der Sparkle-Schlüssel liegt nur im Schlüsselbund (Konto `token-stats`, Dienst
+`https://sparkle-project.org`); ohne ihn können installierte Apps keine Updates mehr
+annehmen. Sicherung: `generate_keys --account token-stats -x datei` aus
+`build/SourcePackages/artifacts/sparkle/Sparkle/bin/`.
 Die Notarisierung nutzt das Schlüsselbund-Profil `notary` (`xcrun notarytool
 store-credentials`). Team-ID ist `2GA7DQ3P3Z` (OU im Zertifikat) – nicht die Kennung in
 Klammern im Namen des Development-Zertifikats. `CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO`

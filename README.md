@@ -118,6 +118,9 @@ unter *Assets* die Datei `Token-Stats-<Version>.dmg`.
    Menüleiste; ein Dock-Symbol gibt es nicht.
 3. Optional: Rechtsklick aufs Symbol → **Bei Anmeldung starten**.
 
+Updates kommen ab Version 0.2.0 von selbst: Token Stats sucht einmal täglich und
+installiert eine neue Version beim Beenden. Wer 0.1.x hat, lädt 0.2.0 einmal von Hand.
+
 Die App ist mit Developer ID signiert und von Apple notarisiert. Beim ersten Start liest
 sie alle Session-Logs einmal ein (bei einigen Gigabyte Logs etwa 40 Sekunden), danach
 nur noch, was neu dazukommt.
@@ -160,11 +163,13 @@ Deine Anmeldungen bei Claude Code und Codex bleiben unberührt.
 | Einstellungen | UserDefaults `de.mahype.TokenStats` |
 | Claude-Kontingent | `api.anthropic.com/api/oauth/usage` |
 | Codex-Kontingent | `chatgpt.com/backend-api/wham/usage` |
+| Update-Prüfung (täglich, abschaltbar) | `mahype.github.io/token-stats/appcast.xml`, Download von `github.com` |
 
 - **Zugangsdaten werden nur gelesen** – nicht kopiert, nicht ins App-Verzeichnis
   gespiegelt, nicht erneuert. Ist ein Token abgelaufen, zeigt die App einen Hinweis;
   einmal Claude Code bzw. Codex starten genügt, die CLI erneuert es selbst.
-- **Nur die Anbieter-Endpunkte** werden kontaktiert. Preise stammen aus der
+- **Nur die Anbieter-Endpunkte** werden kontaktiert, dazu einmal täglich der Update-Feed –
+  ohne Systemdaten, abschaltbar unter Einstellungen → Updates. Preise stammen aus der
   mitgelieferten Tabelle, nicht aus dem Netz.
 - **Abfrageintervall mindestens 300 s.** Die Usage-Endpunkte sind undokumentiert und
   hart rate-limitiert.
@@ -189,6 +194,7 @@ Gesamt-Tokenzahl würde in die Irre führen.
 | `make run` | bauen, laufende Instanz beenden, neu starten |
 | `make test` | Unit-Tests (beendet eine laufende Instanz, danach `make run`) |
 | `make release` | Universal-Build als DMG nach `build/`: signiert, notarisiert, gestapelt |
+| `make publish` | Tag, GitHub-Release und Eintrag im Update-Feed für dieses DMG |
 | `make screenshots` | die Bilder dieser README nach `screenshots/` rendern (außer Einstellungen, siehe [CLAUDE.md](CLAUDE.md)) |
 | `Scripts/update-pricing.sh` | Preistabelle aus LiteLLM aktualisieren |
 

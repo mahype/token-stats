@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// Einstellungsfenster, Abschnitte „Anzeige“ und „Aktualisierung“ (SPEC §4).
+/// Einstellungsfenster, Abschnitte „Anzeige“, „Verbrauch“, „Aktualisierung“ und „Updates“ (SPEC §4).
 struct SettingsView: View {
     @Bindable var settings: AppSettings
     let store: UsageStore
     let consumption: ConsumptionStore
+    @Bindable var updater: Updater
 
     @State private var launchAtLogin = false
 
@@ -59,11 +60,35 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+
+            Section {
+                Toggle("Automatisch nach Updates suchen", isOn: $updater.automaticallyChecks)
+                LabeledContent("Version \(Self.version)") {
+                    Button("Jetzt suchen") { updater.checkNow() }
+                }
+            } header: {
+                Text("Updates")
+            } footer: {
+                Text(updatesFooter)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .disabled(!updater.isAvailable)
         }
         .formStyle(.grouped)
         .frame(width: 460)
         .fixedSize(horizontal: false, vertical: true)
         .onAppear { launchAtLogin = settings.launchAtLogin }
+    }
+
+    private static var version: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+    }
+
+    private var updatesFooter: String {
+        guard updater.isAvailable else { return "In Debug-Builds abgeschaltet." }
+        let last = updater.lastCheck.map { "Zuletzt gesucht \(Format.ago($0))." } ?? "Noch nicht gesucht."
+        return "Einmal täglich, ohne Systemdaten. Updates werden beim Beenden installiert. \(last)"
     }
 
     /// Alle bekannten Limits als „Claude · Woche“.
