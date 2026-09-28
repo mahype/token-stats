@@ -9,6 +9,7 @@
 [![Zugangsdaten nur lesen](https://img.shields.io/badge/Zugangsdaten-nur%20lesen-brightgreen.svg)](#was-die-app-liest-speichert-und-kontaktiert)
 [![Keine Telemetrie](https://img.shields.io/badge/Telemetrie-keine-brightgreen.svg)](#was-die-app-liest-speichert-und-kontaktiert)
 [![Keine Abhängigkeiten](https://img.shields.io/badge/Abh%C3%A4ngigkeiten-keine-brightgreen.svg)](#voraussetzungen)
+[![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-blue.svg)](LICENSE)
 
 Menüleisten-App für macOS, die die Kontingente deiner KI-Coding-Abos anzeigt:
 Session-Fenster, Wochenlimit, Modell-Limits und Extra-Verbrauch von Claude Code und
@@ -200,6 +201,10 @@ Das vollständige Design mit den Begründungen hinter den Entscheidungen steht i
   und bei Reset
 - [ ] **v3** – Gemini, Antigravity, Copilot, Cursor, Prepaid-Guthaben,
   Claude-Account-Wechsel
+
+## Lizenz
+
+MIT – siehe [LICENSE](LICENSE).
 
 ## Hinweis
 
