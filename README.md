@@ -77,6 +77,15 @@ Die drei Anzeige-Modi der Menüleiste:
   </picture>
 </p>
 
+Die Einstellungen – Anzeige, Stichtag des Abos und Abfrageintervall:
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="screenshots/settings-dark.png">
+    <img src="screenshots/settings-light.png" width="460" alt="Einstellungsfenster mit den Abschnitten Anzeige, Verbrauch und Aktualisierung">
+  </picture>
+</p>
+
 <sub>Die Limits in den Screenshots sind Demo-Werte, der Verbrauch ist echt.</sub>
 
 ## Anbieter
@@ -177,7 +186,7 @@ Gesamt-Tokenzahl würde in die Irre führen.
 | `make build` | Projekt aus `project.yml` erzeugen und bauen |
 | `make run` | bauen, laufende Instanz beenden, neu starten |
 | `make test` | Unit-Tests (beendet eine laufende Instanz, danach `make run`) |
-| `make screenshots` | die Bilder dieser README nach `screenshots/` rendern |
+| `make screenshots` | die Bilder dieser README nach `screenshots/` rendern (außer Einstellungen, siehe [CLAUDE.md](CLAUDE.md)) |
 | `Scripts/update-pricing.sh` | Preistabelle aus LiteLLM aktualisieren |
 
 `TokenStats.xcodeproj` ist nicht eingecheckt, XcodeGen erzeugt es bei jedem Build.

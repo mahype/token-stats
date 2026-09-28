@@ -37,6 +37,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         observeIcon()
         store.start()
         consumption.start()
+        #if DEBUG
+        // Für `make screenshots`: Einstellungen gleich öffnen, ohne Klick aufs Symbol.
+        if ProcessInfo.processInfo.environment["TOKENSTATS_OPEN_SETTINGS"] != nil { openSettings() }
+        #endif
     }
 
     // MARK: Symbol
