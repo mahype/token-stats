@@ -120,6 +120,13 @@ final class UsageStore {
         }
     }
 
+    #if DEBUG
+    /// Nur für `make screenshots`: fester Stand, ohne Abruf und ohne den Cache zu überschreiben.
+    func showDemo(_ snapshots: [String: ProviderSnapshot]) {
+        states = snapshots.mapValues { ProviderState(snapshot: $0) }
+    }
+    #endif
+
     // MARK: Cache
     // Nur Prozentwerte und Reset-Zeiten – keine Zugangsdaten. Überlebt Neustarts,
     // damit ein Neustart der App keine zusätzliche Abfrage auslöst.

@@ -9,7 +9,20 @@ struct PopoverView: View {
 
     @State private var selectedID: String?
     /// Beim Öffnen steht immer „Limits“ – die Auswahl wird absichtlich nicht gemerkt.
-    @State private var page: Page = .limits
+    @State private var page: Page
+
+    init(
+        store: UsageStore, consumption: ConsumptionStore, settings: AppSettings,
+        selectedID: String? = nil, showUsage: Bool = false,
+        openSettings: @escaping () -> Void
+    ) {
+        self.store = store
+        self.consumption = consumption
+        self.settings = settings
+        self.openSettings = openSettings
+        _selectedID = State(initialValue: selectedID)
+        _page = State(initialValue: showUsage ? .usage : .limits)
+    }
 
     static let width: CGFloat = 372
     static let maxVisibleTabs = 4

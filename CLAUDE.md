@@ -28,6 +28,9 @@ und fragt nach einem Neustart erst nach Ablauf des Intervalls wieder ab — häu
 
 `make test` startet die App als Test-Host und beendet dabei eine laufende Instanz —
 danach `make run`. Preistabelle aktualisieren: `Scripts/update-pricing.sh`.
+README-Bilder neu rendern: `make screenshots` (nur Debug-Build; Demo-Limits, echter
+Verbrauch; Hell und Dunkel). Braucht keine Bildschirmaufnahme-Freigabe, weil die App
+ihre Views selbst zeichnet.
 
 ## Nächster Schritt
 

@@ -16,6 +16,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Als Test-Host weder Endpunkte abfragen noch Logs einlesen.
         if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return }
+        #if DEBUG
+        if let directory = ProcessInfo.processInfo.environment["TOKENSTATS_SCREENSHOTS"] {
+            Screenshots(store: store, consumption: consumption, settings: settings)
+                .run(into: URL(filePath: directory))
+            return
+        }
+        #endif
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
