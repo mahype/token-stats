@@ -1,0 +1,58 @@
+name: TokenStats
+options:
+  bundleIdPrefix: de.mahype
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: ""
+    ENABLE_HARDENED_RUNTIME: YES
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  TokenStats:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/TokenStats
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.mahype.TokenStats
+        PRODUCT_NAME: Token Stats
+        PRODUCT_MODULE_NAME: TokenStats
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_LSUIElement: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Token Stats
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        ENABLE_APP_SANDBOX: NO
+
+  TokenStatsTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/TokenStatsTests
+    dependencies:
+      - target: TokenStats
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Token Stats.app/Contents/MacOS/Token Stats"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+schemes:
+  TokenStats:
+    build:
+      targets:
+        TokenStats: all
+        TokenStatsTests: [test]
+    test:
+      targets:
+        - TokenStatsTests

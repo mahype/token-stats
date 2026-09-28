@@ -1,0 +1,5 @@
+.DS_Store
+build/
+# Wird aus project.yml erzeugt (make project)
+TokenStats.xcodeproj/
+xcuserdata/
