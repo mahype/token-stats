@@ -19,7 +19,7 @@ test: project
 
 run: build
 	-pkill -x "Token Stats"
-	@while pgrep -qx "Token Stats"; do sleep 0.2; done
+	@while pgrep -qx "Token Stats"; do sleep 0.2; done; sleep 1
 	open "$(APP)"
 
 clean:

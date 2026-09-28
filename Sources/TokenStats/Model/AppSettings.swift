@@ -37,6 +37,15 @@ final class AppSettings {
         }
     }
 
+    /// API-Vergleichswert in Geld zeigen; aus = reine Token-Seite (SPEC §4).
+    var showMoney: Bool {
+        didSet { defaults.set(showMoney, forKey: "showMoney") }
+    }
+    /// Stichtag des Abos für den Zeitraum „Abrechnungsmonat“.
+    var billingDay: Int {
+        didSet { defaults.set(billingDay, forKey: "billingDay") }
+    }
+
     static let minimumInterval: TimeInterval = 300
 
     init() {
@@ -44,6 +53,8 @@ final class AppSettings {
         fixedWindow = defaults.string(forKey: "fixedWindow")
         useStateColor = defaults.object(forKey: "useStateColor") as? Bool ?? true
         refreshInterval = max(defaults.double(forKey: "refreshInterval"), Self.minimumInterval)
+        showMoney = defaults.object(forKey: "showMoney") as? Bool ?? true
+        billingDay = min(max(defaults.integer(forKey: "billingDay"), 1), 31)
     }
 
     // Bei Anmeldung starten – Zustand liegt bei SMAppService, nicht in UserDefaults.

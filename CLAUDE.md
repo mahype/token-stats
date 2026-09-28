@@ -7,8 +7,9 @@ dem Omarchy-Umfeld.
 
 ## Stand
 
-v1 in Arbeit: Grundgerüst, Claude- und Codex-Provider und Seite „Limits“ laufen gegen die
-echten Endpunkte. Das Design liegt vollständig in [SPEC.md](SPEC.md). Bevor du etwas änderst: SPEC.md lesen — dort stehen auch die
+v1 steht (Limits für Claude und Codex gegen die echten Endpunkte). v2 in Arbeit: Seite
+„Verbrauch“ mit JSONL-Pipeline, SQLite-Aggregat und Preistabelle ist drin, Mitteilungen
+fehlen noch. Das Design liegt vollständig in [SPEC.md](SPEC.md). Bevor du etwas änderst: SPEC.md lesen — dort stehen auch die
 Begründungen für Entscheidungen, die sonst wie Geschmacksfragen aussehen.
 
 Visueller Entwurf mit allen Mockups (Menüleiste, Popover „Limits“ und „Verbrauch“,
@@ -22,11 +23,15 @@ weil `xcode-select` hier auf die Command Line Tools zeigt.
 
 Die App cacht den letzten Stand in `~/Library/Application Support/TokenStats/state.json`
 und fragt nach einem Neustart erst nach Ablauf des Intervalls wieder ab — häufiges
-`make run` verbraucht also kein Rate-Limit.
+`make run` verbraucht also kein Rate-Limit. Das Verbrauchs-Aggregat liegt daneben in
+`usage.sqlite`; löschen erzwingt ein komplettes Neueinlesen (~40 s).
+
+`make test` startet die App als Test-Host und beendet dabei eine laufende Instanz —
+danach `make run`. Preistabelle aktualisieren: `Scripts/update-pricing.sh`.
 
 ## Nächster Schritt
 
-Rest von v1 (SPEC.md §8) prüfen und polieren, dann v2: Verbrauchsseite und Mitteilungen.
+Rest von v2 (SPEC.md §8): Mitteilungen bei 50/80/90 % und bei Reset (§5).
 
 ## Harte Randbedingungen
 

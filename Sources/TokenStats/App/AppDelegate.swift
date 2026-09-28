@@ -7,12 +7,16 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = AppSettings()
     private lazy var store = UsageStore(providers: [ClaudeProvider(), CodexProvider()], settings: settings)
+    private lazy var consumption = ConsumptionStore(settings: settings)
 
     private var statusItem: NSStatusItem!
     private let popover = NSPopover()
     private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Als Test-Host weder Endpunkte abfragen noch Logs einlesen.
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return }
+
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
             button.target = self
@@ -25,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         observeIcon()
         store.start()
+        consumption.start()
     }
 
     // MARK: Symbol
@@ -71,7 +76,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         // Frische View bei jedem Öffnen: knappster Tab aktiv, immer Seite „Limits“.
-        let controller = NSHostingController(rootView: PopoverView(store: store) { [weak self] in
+        consumption.refresh()
+        let controller = NSHostingController(rootView: PopoverView(
+            store: store, consumption: consumption, settings: settings
+        ) { [weak self] in
             self?.openSettings()
         })
         controller.sizingOptions = .preferredContentSize
@@ -126,7 +134,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openSettings() {
         popover.performClose(nil)
         if settingsWindow == nil {
-            let controller = NSHostingController(rootView: SettingsView(settings: settings, store: store))
+            let controller = NSHostingController(rootView: SettingsView(settings: settings, store: store, consumption: consumption))
             controller.sizingOptions = .preferredContentSize
             let window = NSWindow(contentViewController: controller)
             window.title = "Einstellungen"

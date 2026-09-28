@@ -17,6 +17,30 @@ enum Format {
         return "\(formatter.string(from: NSNumber(value: cents / 100)) ?? "?") $"
     }
 
+    static func money(_ amount: Double) -> String {
+        dollars(cents: amount * 100)
+    }
+
+    /// „38,4 M“, „812 k“, „950“
+    static func tokens(_ count: Int) -> String {
+        let value = Double(count)
+        switch value {
+        case 1_000_000_000...: return "\(number(value / 1_000_000_000, digits: 1)) Mrd."
+        case 1_000_000...: return "\(number(value / 1_000_000, digits: 1)) M"
+        case 1_000...: return "\(number(value / 1_000, digits: 0)) k"
+        default: return "\(count)"
+        }
+    }
+
+    static func number(_ value: Double, digits: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.locale = locale
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = digits
+        formatter.maximumFractionDigits = digits
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
+
     static func number(_ value: Double) -> String {
         let formatter = NumberFormatter()
         formatter.locale = locale

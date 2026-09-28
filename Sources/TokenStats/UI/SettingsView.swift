@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @Bindable var settings: AppSettings
     let store: UsageStore
+    let consumption: ConsumptionStore
 
     @State private var launchAtLogin = false
 
@@ -26,11 +27,25 @@ struct SettingsView: View {
                 }
 
                 Toggle("Zustandsfarbe im Icon verwenden", isOn: $settings.useStateColor)
+                Toggle("API-Vergleichswert in Geld anzeigen", isOn: $settings.showMoney)
                 Toggle("Bei Anmeldung starten", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, newValue in
                         settings.launchAtLogin = newValue
                         launchAtLogin = settings.launchAtLogin
                     }
+            }
+
+            Section {
+                Picker("Stichtag des Abos", selection: $settings.billingDay) {
+                    ForEach(1...31, id: \.self) { Text("\($0).").tag($0) }
+                }
+                .onChange(of: settings.billingDay) { consumption.refresh() }
+            } header: {
+                Text("Verbrauch")
+            } footer: {
+                Text("Beginn des Zeitraums „Abrechnungsmonat“. In kürzeren Monaten gilt der Monatsletzte.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section {

@@ -1,11 +1,15 @@
 import SwiftUI
 
-/// Popover, 372 pt breit: Kopf · Tabs je Client · Seite „Limits“ · Fußzeile (SPEC §3).
+/// Popover, 372 pt breit: Kopf mit Seitenwahl · Tabs je Client · Seite · Fußzeile (SPEC §3).
 struct PopoverView: View {
     let store: UsageStore
+    let consumption: ConsumptionStore
+    let settings: AppSettings
     let openSettings: () -> Void
 
     @State private var selectedID: String?
+    /// Beim Öffnen steht immer „Limits“ – die Auswahl wird absichtlich nicht gemerkt.
+    @State private var page: Page = .limits
 
     static let width: CGFloat = 372
     static let maxVisibleTabs = 4
@@ -26,8 +30,11 @@ struct PopoverView: View {
                 if let selected {
                     ProviderPage(
                         provider: selected,
+                        page: page,
                         state: store.states[selected.id] ?? .init(),
-                        isLoading: store.loading.contains(selected.id)
+                        isLoading: store.loading.contains(selected.id),
+                        consumption: consumption,
+                        showMoney: settings.showMoney
                     )
                 }
             }
@@ -48,16 +55,7 @@ struct PopoverView: View {
             RobotIcon()
             Text("Token Stats").font(.system(size: 13.5, weight: .bold))
             Spacer()
-            if let pick = store.displayed {
-                HStack(spacing: 5) {
-                    Circle().fill(pick.window.severity.color).frame(width: 6, height: 6)
-                    Text("knapp: \(pick.window.name) \(Format.percent(pick.window.percent))")
-                        .monospacedDigit()
-                }
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-                .help("\(pick.providerName) · \(pick.window.name)")
-            }
+            PageSwitch(selection: $page)
         }
         .padding(.horizontal, Self.inset)
         .padding(.top, 14)
@@ -201,12 +199,51 @@ private struct FooterButton<Content: View>: View {
     }
 }
 
-// MARK: - Seite „Limits“
+// MARK: - Seiten „Limits“ und „Verbrauch“
+
+private enum Page: String, CaseIterable {
+    case limits = "Limits", usage = "Verbrauch"
+}
+
+/// Schlanker Umschalter in der Kopfzeile – bewusst leiser als ein Segmented Control.
+private struct PageSwitch: View {
+    @Binding var selection: Page
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(Page.allCases, id: \.self) { option in
+                let isOn = option == selection
+                Button { selection = option } label: {
+                    Text(option.rawValue)
+                        .font(.system(size: 11, weight: isOn ? .semibold : .regular))
+                        .foregroundStyle(isOn ? .primary : .secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background {
+                            if isOn {
+                                Capsule()
+                                    .fill(.background)
+                                    .shadow(color: .black.opacity(0.12), radius: 1, y: 0.5)
+                            }
+                        }
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(2)
+        .background(Capsule().fill(.quaternary.opacity(0.6)))
+        .animation(.easeOut(duration: 0.12), value: selection)
+    }
+}
 
 private struct ProviderPage: View {
     let provider: any UsageProvider
+    let page: Page
     let state: UsageStore.ProviderState
     let isLoading: Bool
+    let consumption: ConsumptionStore
+    let showMoney: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -216,7 +253,7 @@ private struct ProviderPage: View {
                     Text(plan).font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary)
                 }
                 Spacer()
-                if let tightest = state.snapshot?.tightestWindow {
+                if page == .limits, let tightest = state.snapshot?.tightestWindow {
                     Text(Format.percent(tightest.percent))
                         .font(.system(size: 10.5, weight: .semibold))
                         .foregroundStyle(tightest.severity.color)
@@ -226,6 +263,24 @@ private struct ProviderPage: View {
                 }
             }
 
+            if page == .usage {
+                UsageView(
+                    providerID: provider.id,
+                    consumption: consumption,
+                    showMoney: showMoney,
+                    subscription: SubscriptionPrice.dollars(provider: provider.id, plan: state.snapshot?.account?.plan)
+                )
+            } else {
+                limits
+            }
+        }
+        .padding(.horizontal, PopoverView.inset)
+        .padding(.top, 16)
+        .padding(.bottom, 18)
+    }
+
+    @ViewBuilder
+    private var limits: some View {
             StatusLine(state: state)
 
             if let snapshot = state.snapshot {
@@ -248,10 +303,6 @@ private struct ProviderPage: View {
             } else if isLoading {
                 HStack { Spacer(); ProgressView().controlSize(.small); Spacer() }.padding(.vertical, 20)
             }
-        }
-        .padding(.horizontal, PopoverView.inset)
-        .padding(.top, 16)
-        .padding(.bottom, 18)
     }
 }
 

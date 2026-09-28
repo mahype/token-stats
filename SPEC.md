@@ -53,9 +53,9 @@ teuer ist.
 Breite 372 pt. Aufbau von oben nach unten:
 
 ### 3.1 Kopfzeile
-Roboter-Icon · „Token Stats“ · rechts das knappste Limit als Kurzform
-(`● knapp: Opus 96 %`) — derselbe Wert wie in der Menüleiste, damit Bar und Popover
-nie widersprechen, egal welcher Tab offen ist.
+Roboter-Icon · „Token Stats“ · rechts der Seitenumschalter `Limits · Verbrauch` (§3.3).
+Das knappste Limit steht hier nicht mehr (Entscheidung 28.09.2026): Es ist schon in der
+Menüleiste sichtbar und in den Tab-Punkten; doppelt wirkte der Kopf überladen.
 
 ### 3.2 Tab-Leiste — ein Tab je Client
 `Claude · Codex · Gemini · Copilot · +2`
@@ -66,8 +66,9 @@ nie widersprechen, egal welcher Tab offen ist.
 - Passen nicht alle Tabs in die Breite, sammelt `+n` den Rest in einem Menü.
 - Tabs statt langer Liste, weil die Popover-Höhe sonst mit jedem Anbieter wächst.
 
-### 3.3 Unter-Umschalter je Tab
-`Limits · Verbrauch` (Segmented Control, linksbündig).
+### 3.3 Seitenumschalter
+`Limits · Verbrauch` als schlanker Kapsel-Umschalter rechts in der Kopfzeile, gilt für
+alle Tabs. Kein Segmented Control im Inhalt — das wirkte zu klotzig.
 Beim Öffnen steht **immer „Limits“** — die Auswahl wird absichtlich nicht gemerkt.
 
 ### 3.4 Seite „Limits“
@@ -99,6 +100,11 @@ Reset Mi 09:00          64 % der Zeit · 18 Pkt. über Plan
 - Aufschlüsselung je Modell: `Opus 5 · 2,1 M in · 0,4 M out · 4,2 M Cache → 121,40 $`,
   Summenzeile unten.
 - Fußnote, die die Rechnung offenlegt (siehe Abschnitt 6).
+- Umgesetzt (v2): Standardzeitraum „7 Tage“; „Heute“ ohne Tagesdiagramm; bei 30 Tagen
+  Säulen ohne Beschriftung (Tooltip je Tag). Der Stichtag für „Abrechnungsmonat“ steht in
+  den Einstellungen (Standard: 1.; in kürzeren Monaten gilt der Monatsletzte). „Abo x $ /
+  Monat“ nur für bekannte Pläne (Claude Pro/Max 5×/Max 20×, Codex Plus/Pro).
+  Die Modellzeile zeigt „Cache“ als Summe; die Aufteilung Schreiben/Lesen steht im Tooltip.
 - **Cache getrennt ausweisen** ist Pflicht: bei Claude Code sind oft ~80 % des Volumens
   Cache-Reads zu einem Bruchteil des Input-Preises. Eine nackte Gesamt-Tokenzahl führt
   in die Irre.
@@ -192,6 +198,24 @@ Auf dem Zielrechner bereits vorhanden: `~/.claude`, `~/.codex`, `~/.gemini`,
   (Dienst `Claude Code-credentials`). Eine vorhandene `~/.claude/.credentials.json` kann
   veraltet sein — Schlüsselbund zuerst, Datei als Fallback.
 
+### Verbrauch aus den Logs (verifiziert 28.09.2026)
+
+- **Claude:** Jede Antwort steht mehrfach im Log (eine Zeile je Inhaltsblock), und die
+  `output_tokens` wachsen dabei — die **letzte** Zeile ist maßgeblich. Deduplizierung
+  global über `message.id:requestId` (fortgesetzte Sessions kopieren den Verlauf). Wie
+  ccusage die erste Zeile zu nehmen, zählt hier ~9 % Output zu wenig. Liegt eine Antwort
+  zwischen zwei Einlesedurchläufen, wird der Output-Zuwachs nachgetragen.
+  Cache-Write getrennt nach `ephemeral_5m` / `ephemeral_1h` (1 h kostet 2 × Input, 5 min 1,25 ×).
+- **Codex:** `event_msg`/`token_count` mit kumulierten Summen (`total_token_usage`);
+  gezählt wird die Differenz zum vorherigen Stand derselben Datei, Modell aus
+  `turn_context`. `input_tokens` enthält die Cache-Reads (`cached_input_tokens`) und wird
+  getrennt ausgewiesen. Dateien wandern von `sessions/` nach `archived_sessions/`; der
+  Lesestand hängt am Dateinamen.
+- Erstes Einlesen auf diesem Mac: 1.823 Dateien / ~3,3 GB in ~36 s, danach inkrementell
+  (Offset je Datei, Takt 60 s und beim Öffnen des Popovers). Aggregat in
+  `~/Library/Application Support/TokenStats/usage.sqlite`; der Betrag wird erst bei der
+  Abfrage aus Tokens × Preistabelle berechnet, eine neue Preistabelle wirkt also sofort.
+
 ### Preise: abrufen geht nicht, rechnen schon
 
 - Der Usage-Endpunkt liefert Prozentwerte und Reset-Zeiten — **keine Tokenzahlen und
@@ -282,9 +306,9 @@ Claude-Account-Wechsel, optional Verbrauchs-Sync über iCloud Drive zwischen meh
 - Claude-Guthaben (`/api/oauth/organizations/<org>/prepaid/credits`) ist in v1 noch nicht
   angebunden — zweiter rate-limitierter Aufruf, erst bei Bedarf.
 - Ob Gemini-/Antigravity-Quotas ohne Umweg über die CLI-Caches abrufbar sind.
-- Aktualisierungsweg der Preistabelle: mit dem App-Update ausliefern oder beim Start
-  einmal täglich nachladen (Nachladen kostet eine Netzverbindung, die die App sonst
-  nicht braucht).
+- Aktualisierungsweg der Preistabelle: vorerst mit dem App-Update
+  (`Scripts/update-pricing.sh` erzeugt `Resources/pricing.json` aus LiteLLM, Stand im
+  Dateikopf). Nachladen zur Laufzeit wäre eine zusätzliche Netzverbindung.
 - Signierung/Notarisierung und Verteilweg (direktes `.app`, Homebrew Cask?).
 - Prüfen, ob eine bestehende App genügt, bevor gebaut wird: Claude Tracker,
   ClaudeUsageBar, claude-codex-limits, ClaudeMeter, Usagebar, SessionWatcher.
