@@ -37,6 +37,12 @@ keine Abfrage, öffnet das Fenster; nur Debug), Fenster-ID per `CGWindowListCopy
 `screencapture -x -o -l <id>`, je einmal im hellen und dunklen Modus. Braucht die
 Freigabe „Bildschirmaufnahme“ für das Terminal.
 
+Release: `MARKETING_VERSION` in `project.yml` hochsetzen, `make release` (Universal-DMG in
+`build/`), Tag `vX.Y.Z` pushen, `gh release create vX.Y.Z build/Token-Stats-X.Y.Z.dmg`.
+Nur ad-hoc signiert, nicht notarisiert – es gibt hier kein „Developer ID Application“-
+Zertifikat. Nutzer müssen den ersten Start unter Datenschutz & Sicherheit freigeben
+(steht in der README).
+
 ## Nächster Schritt
 
 Rest von v2 (SPEC.md §8): Mitteilungen bei 50/80/90 % und bei Reset (§5).

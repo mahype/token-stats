@@ -3,7 +3,8 @@
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-black.svg?logo=apple)](#voraussetzungen)
 [![Swift 6](https://img.shields.io/badge/Swift-6-F05138.svg?logo=swift&logoColor=white)](https://www.swift.org)
 [![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-0A84FF.svg)](https://developer.apple.com/xcode/swiftui/)
-[![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-blue.svg)](project.yml)
+[![Release](https://img.shields.io/github/v/release/mahype/token-stats?label=release&color=blue)](https://github.com/mahype/token-stats/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/mahype/token-stats/total?label=downloads&color=blue)](https://github.com/mahype/token-stats/releases)
 [![Status: v2 in Arbeit](https://img.shields.io/badge/status-v2%20in%20Arbeit-orange.svg)](#roadmap)
 [![Anbieter: Claude Code · Codex](https://img.shields.io/badge/Anbieter-Claude%20Code%20%C2%B7%20Codex-8A63D2.svg)](#anbieter)
 [![Zugangsdaten nur lesen](https://img.shields.io/badge/Zugangsdaten-nur%20lesen-brightgreen.svg)](#was-die-app-liest-speichert-und-kontaktiert)
@@ -102,15 +103,42 @@ Oberfläche bleibt beim Hinzufügen unberührt.
 
 ## Voraussetzungen
 
-- macOS 14 (Sonoma) oder neuer
-- Xcode 16 oder neuer (Swift 6) und [XcodeGen](https://github.com/yonaskolb/XcodeGen)
+- macOS 14 (Sonoma) oder neuer, Apple Silicon oder Intel
 - Claude Code und/oder Codex, mindestens einmal angemeldet
 
 Keine Pakete, kein Framework, keine Laufzeit – ein einzelnes `.app`.
 
 ## Installation
 
-Es gibt noch keine fertigen Builds; die App wird aus dem Quelltext gebaut:
+**[⬇ Token Stats herunterladen](https://github.com/mahype/token-stats/releases/latest)** –
+unter *Assets* die Datei `Token-Stats-<Version>.dmg`.
+
+1. Das DMG öffnen und **Token Stats** auf **Programme** ziehen.
+2. Token Stats aus dem Programme-Ordner starten. Das Robotersymbol erscheint in der
+   Menüleiste; ein Dock-Symbol gibt es nicht.
+3. Optional: Rechtsklick aufs Symbol → **Bei Anmeldung starten**.
+
+### Beim ersten Öffnen: „Token Stats kann nicht geöffnet werden“
+
+Die App ist noch nicht von Apple notarisiert, deshalb blockiert macOS den ersten Start.
+Einmalig freigeben:
+
+1. Die Meldung mit **Fertig** schließen.
+2. **Systemeinstellungen → Datenschutz & Sicherheit**, ganz nach unten scrollen.
+3. Bei „Token Stats wurde blockiert …“ auf **Dennoch öffnen** klicken und bestätigen.
+
+Alternativ im Terminal:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/Token Stats.app"
+```
+
+Danach startet die App normal. Beim ersten Start liest sie alle Session-Logs einmal ein
+(bei einigen Gigabyte Logs etwa 40 Sekunden), danach nur noch, was neu dazukommt.
+
+### Aus dem Quelltext bauen
+
+Mit Xcode 16 oder neuer (Swift 6) und [XcodeGen](https://github.com/yonaskolb/XcodeGen):
 
 ```bash
 brew install xcodegen
@@ -119,20 +147,8 @@ cd token-stats
 make run
 ```
 
-`make run` baut die App und startet sie. Das Robotersymbol erscheint in der Menüleiste;
-ein Dock-Symbol gibt es nicht. Das Makefile nutzt `/Applications/Xcode.app`, auch wenn
-`xcode-select` auf die Command Line Tools zeigt.
-
-Für den Dauerbetrieb die App nach `/Programme` kopieren und dort starten; danach
-**Bei Anmeldung starten** per Rechtsklick aufs Symbol aktivieren:
-
-```bash
-cp -R "build/Build/Products/Debug/Token Stats.app" /Applications/
-open "/Applications/Token Stats.app"
-```
-
-Beim ersten Start liest die App alle Session-Logs einmal ein (bei einigen Gigabyte
-Logs etwa 40 Sekunden), danach nur noch, was neu dazukommt.
+`make run` baut die App und startet sie. Das Makefile nutzt `/Applications/Xcode.app`,
+auch wenn `xcode-select` auf die Command Line Tools zeigt.
 
 ## Entfernen
 
@@ -186,6 +202,7 @@ Gesamt-Tokenzahl würde in die Irre führen.
 | `make build` | Projekt aus `project.yml` erzeugen und bauen |
 | `make run` | bauen, laufende Instanz beenden, neu starten |
 | `make test` | Unit-Tests (beendet eine laufende Instanz, danach `make run`) |
+| `make release` | Universal-Build (Release) als DMG nach `build/`, mit SHA-256 |
 | `make screenshots` | die Bilder dieser README nach `screenshots/` rendern (außer Einstellungen, siehe [CLAUDE.md](CLAUDE.md)) |
 | `Scripts/update-pricing.sh` | Preistabelle aus LiteLLM aktualisieren |
 
