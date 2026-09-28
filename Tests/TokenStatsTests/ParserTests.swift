@@ -90,9 +90,14 @@ import Testing
     }
 
     @Test func paceText() {
-        #expect(Format.pace(percent: 0.82, elapsed: 0.64) == "64 % der Zeit · 18 Pkt. über Plan")
-        #expect(Format.pace(percent: 0.41, elapsed: 0.58) == "58 % der Zeit · 17 Pkt. unter Plan")
-        #expect(Format.pace(percent: 0.50, elapsed: 0.51) == "51 % der Zeit · im Plan")
+        let week: TimeInterval = 7 * 24 * 3600
+        let session: TimeInterval = 5 * 3600
+        #expect(Format.pace(percent: 0.82, elapsed: 0.64, windowLength: week) == "1 Tag vorgegriffen")
+        #expect(Format.pace(percent: 0.11, elapsed: 0.70, windowLength: week) == "4 Tage ungenutzt")
+        #expect(Format.pace(percent: 0.50, elapsed: 0.51, windowLength: week) == "im Takt")
+        #expect(Format.pace(percent: 0.60, elapsed: 0.42, windowLength: session) == "54 Min. vorgegriffen")
+        #expect(Format.pace(percent: 0.20, elapsed: 0.80, windowLength: session) == "3 Std. ungenutzt")
+        #expect(Format.pace(percent: 0.30, elapsed: 0.40, windowLength: week) == "17 Std. ungenutzt")
     }
 
     @Test func elapsedFraction() {

@@ -112,7 +112,7 @@ struct Screenshots {
 
     // MARK: Demo-Werte
 
-    /// Ein Stand, der alle Zustände zeigt: grün, gelb, Pace-Marke über Plan.
+    /// Ein Stand, der alle Zustände zeigt: grün, gelb, Pace vorgegriffen, ungenutzt und im Takt.
     static func demoSnapshots(now: Date) -> [String: ProviderSnapshot] {
         let hour: TimeInterval = 3600
         let week = 7 * 24 * hour

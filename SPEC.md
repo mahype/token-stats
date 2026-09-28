@@ -78,14 +78,22 @@ Je Limit eine Meter-Zeile:
 
 ```
 Woche  7 d, alle Modelle                      82 %
-[███████████████████░░░░░░░]   ← Pace-Marke bei 64 %
-Reset Mi 09:00          64 % der Zeit · 18 Pkt. über Plan
+[██████████████▒▒▒▒░░░░░░░░]   ← Pace-Marke bei 64 %, ▒ = schraffierte Differenz
+Reset Mi 09:00                      1 Tag vorgegriffen
 ```
 
 - Balken 6 pt hoch, Füllfarbe = Zustandsfarbe.
 - **Pace-Marke:** dünne senkrechte Marke an der Position „Anteil der verstrichenen
-  Fensterzeit“. Füllstand rechts davon = zu schneller Verbrauch. Zusätzlich als Text
-  („64 % der Zeit · 18 Pkt. über Plan“).
+  Fensterzeit“, also dort, wo man bei gleichmäßigem Verbrauch stünde.
+- **Differenz als Fläche:** Der Abstand zwischen Füllstand und Marke ist schraffiert —
+  kräftig, wenn der Verbrauch der Zeit voraus ist, blass, wenn Kontingent liegen bleibt.
+  Unter 3 Prozentpunkten Abstand keine Fläche.
+- **Differenz als Zeit:** Der Text rechnet den Abstand in Fensterzeit um: „1 Tag
+  vorgegriffen“, „4 Tage ungenutzt“, „54 Min. vorgegriffen“, sonst „im Takt“. Vorher stand
+  dort „64 % der Zeit · 18 Pkt. über Plan“; unter Prozentpunkten konnte sich niemand etwas
+  vorstellen, und „Plan“ ließ sich mit dem Abo-Plan in der Kopfzeile verwechseln. Eine
+  Hochrechnung („leer ab Mo 20 Uhr“) wurde verworfen, weil sie kurz nach dem Reset stark
+  schwankt. Entwürfe: https://claude.ai/artifact/5HkPZTH2jxgkE21x1gvLdi
 - Reset-Zeit als Uhrzeit bzw. Wochentag + Uhrzeit, nicht als Countdown.
 - Zeilen für Claude: Session 5 h · Woche 7 d · Opus · Sonnet.
 - Darunter Pills für Beträge und Kleinwerte: `Extra 12,40 $ / 50 $`, `Guthaben 7,10 $`,

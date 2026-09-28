@@ -70,14 +70,25 @@ enum Format {
         return "vor \(hours / 24) T."
     }
 
-    /// „64 % der Zeit · 18 Pkt. über Plan“
-    static func pace(percent: Double, elapsed: Double) -> String {
-        let delta = Int(((percent - elapsed) * 100).rounded())
-        let time = "\(Int((elapsed * 100).rounded())) % der Zeit"
-        switch delta {
-        case 3...: return "\(time) · \(delta) Pkt. über Plan"
-        case ...(-3): return "\(time) · \(-delta) Pkt. unter Plan"
-        default: return "\(time) · im Plan"
-        }
+    /// Abstand zwischen Verbrauch und Pace-Marke als Zeit: „1 Tag vorgegriffen“, „4 Tage ungenutzt“,
+    /// „im Takt“ (SPEC §3.4). Zeit statt Prozentpunkten, weil sich darunter niemand etwas vorstellen kann.
+    static func pace(percent: Double, elapsed: Double, windowLength: TimeInterval) -> String {
+        let delta = percent - elapsed
+        guard abs(delta) >= paceTolerance else { return "im Takt" }
+        let span = duration(abs(delta) * windowLength)
+        return delta > 0 ? "\(span) vorgegriffen" : "\(span) ungenutzt"
+    }
+
+    /// Abweichung von der Pace-Marke, ab der sie als Fläche und Text erscheint.
+    static let paceTolerance = 0.03
+
+    /// „40 Min.“, „5 Std.“, „1 Tag“, „4 Tage“ – bewusst grob, es geht um die Größenordnung.
+    static func duration(_ seconds: TimeInterval) -> String {
+        let minutes = seconds / 60
+        if minutes < 90 { return "\(max(1, Int(minutes.rounded()))) Min." }
+        let hours = minutes / 60
+        if hours < 24 { return "\(Int(hours.rounded())) Std." }
+        let days = Int((hours / 24).rounded())
+        return days == 1 ? "1 Tag" : "\(days) Tage"
     }
 }

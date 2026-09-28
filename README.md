@@ -36,8 +36,8 @@ keine Cloud, keine Telemetrie.
 - **Ein Tab je Anbieter**, nach Dringlichkeit sortiert: Der knappste Anbieter steht
   links und ist beim Öffnen aktiv. Der Statuspunkt am Tab zeigt den Zustand ohne Klick.
 - **Meter je Limit** mit Reset-Zeit und **Pace-Marke**: Die senkrechte Marke steht dort,
-  wo du bei gleichmäßigem Verbrauch sein solltest. Darunter im Klartext, z. B.
-  `63 % der Zeit · 19 Pkt. über Plan`.
+  wo du bei gleichmäßigem Verbrauch wärst. Der Abstand dazu ist schraffiert und darunter
+  in Zeit umgerechnet, z. B. `1 Tag vorgegriffen` oder `4 Tage ungenutzt`.
 - **Verbrauch** für Heute, 7 Tage, 30 Tage oder den Abrechnungsmonat: Tokens mit
   getrennt ausgewiesenem Cache-Anteil, Tagesdiagramm und Aufschlüsselung je Modell.
 - **API-Vergleichswert** aus Tokenzahl × Listenpreis, mit mitgelieferter Preistabelle.
