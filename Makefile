@@ -31,12 +31,24 @@ screenshots: build
 	@while pgrep -qx "Token Stats"; do sleep 0.2; done
 	TOKENSTATS_SCREENSHOTS="$(CURDIR)/screenshots" "$(APP)/Contents/MacOS/Token Stats"
 
-# Release-Build (Universal: Apple Silicon und Intel) als DMG. Ad-hoc signiert, nicht notarisiert.
+# Release-Build (Universal: Apple Silicon und Intel) als DMG: mit Developer ID signiert,
+# von Apple notarisiert und gestapelt. Braucht das Zertifikat „Developer ID Application“
+# im Schlüsselbund und das notarytool-Profil (siehe CLAUDE.md).
+TEAM_ID := 2GA7DQ3P3Z
+SIGN_IDENTITY ?= Developer ID Application
+NOTARY_PROFILE ?= notary
+
 release: project
 	xcodebuild -project TokenStats.xcodeproj -scheme TokenStats -configuration Release \
-		-derivedDataPath $(BUILD_DIR) -quiet build
-	codesign --verify --strict "$(RELEASE_APP)"
+		-derivedDataPath $(BUILD_DIR) -quiet build \
+		CODE_SIGN_IDENTITY="$(SIGN_IDENTITY)" DEVELOPMENT_TEAM=$(TEAM_ID) \
+		OTHER_CODE_SIGN_FLAGS=--timestamp CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
+	codesign --verify --strict --deep "$(RELEASE_APP)"
 	Scripts/make-dmg.sh "$(RELEASE_APP)" "$(DMG)"
+	codesign --sign "$(SIGN_IDENTITY)" --timestamp "$(DMG)"
+	xcrun notarytool submit "$(DMG)" --keychain-profile "$(NOTARY_PROFILE)" --wait
+	xcrun stapler staple "$(DMG)"
+	spctl --assess --type open --context context:primary-signature -vv "$(DMG)"
 	shasum -a 256 "$(DMG)"
 
 clean:

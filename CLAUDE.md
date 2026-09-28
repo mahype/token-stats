@@ -38,10 +38,12 @@ keine Abfrage, öffnet das Fenster; nur Debug), Fenster-ID per `CGWindowListCopy
 Freigabe „Bildschirmaufnahme“ für das Terminal.
 
 Release: `MARKETING_VERSION` in `project.yml` hochsetzen, `make release` (Universal-DMG in
-`build/`), Tag `vX.Y.Z` pushen, `gh release create vX.Y.Z build/Token-Stats-X.Y.Z.dmg`.
-Nur ad-hoc signiert, nicht notarisiert – es gibt hier kein „Developer ID Application“-
-Zertifikat. Nutzer müssen den ersten Start unter Datenschutz & Sicherheit freigeben
-(steht in der README).
+`build/`, mit „Developer ID Application: Sven Wagener (2GA7DQ3P3Z)“ signiert, notarisiert
+und gestapelt), Tag `vX.Y.Z` pushen, `gh release create vX.Y.Z build/Token-Stats-X.Y.Z.dmg`.
+Die Notarisierung nutzt das Schlüsselbund-Profil `notary` (`xcrun notarytool
+store-credentials`). Team-ID ist `2GA7DQ3P3Z` (OU im Zertifikat) – nicht die Kennung in
+Klammern im Namen des Development-Zertifikats. `CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO`
+ist nötig, sonst lehnt Apple die App wegen `get-task-allow` ab.
 
 ## Nächster Schritt
 

@@ -118,23 +118,9 @@ unter *Assets* die Datei `Token-Stats-<Version>.dmg`.
    Menüleiste; ein Dock-Symbol gibt es nicht.
 3. Optional: Rechtsklick aufs Symbol → **Bei Anmeldung starten**.
 
-### Beim ersten Öffnen: „Token Stats kann nicht geöffnet werden“
-
-Die App ist noch nicht von Apple notarisiert, deshalb blockiert macOS den ersten Start.
-Einmalig freigeben:
-
-1. Die Meldung mit **Fertig** schließen.
-2. **Systemeinstellungen → Datenschutz & Sicherheit**, ganz nach unten scrollen.
-3. Bei „Token Stats wurde blockiert …“ auf **Dennoch öffnen** klicken und bestätigen.
-
-Alternativ im Terminal:
-
-```bash
-xattr -dr com.apple.quarantine "/Applications/Token Stats.app"
-```
-
-Danach startet die App normal. Beim ersten Start liest sie alle Session-Logs einmal ein
-(bei einigen Gigabyte Logs etwa 40 Sekunden), danach nur noch, was neu dazukommt.
+Die App ist mit Developer ID signiert und von Apple notarisiert. Beim ersten Start liest
+sie alle Session-Logs einmal ein (bei einigen Gigabyte Logs etwa 40 Sekunden), danach
+nur noch, was neu dazukommt.
 
 ### Aus dem Quelltext bauen
 
@@ -202,7 +188,7 @@ Gesamt-Tokenzahl würde in die Irre führen.
 | `make build` | Projekt aus `project.yml` erzeugen und bauen |
 | `make run` | bauen, laufende Instanz beenden, neu starten |
 | `make test` | Unit-Tests (beendet eine laufende Instanz, danach `make run`) |
-| `make release` | Universal-Build (Release) als DMG nach `build/`, mit SHA-256 |
+| `make release` | Universal-Build als DMG nach `build/`: signiert, notarisiert, gestapelt |
 | `make screenshots` | die Bilder dieser README nach `screenshots/` rendern (außer Einstellungen, siehe [CLAUDE.md](CLAUDE.md)) |
 | `Scripts/update-pricing.sh` | Preistabelle aus LiteLLM aktualisieren |
 
