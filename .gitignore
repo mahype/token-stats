@@ -3,3 +3,6 @@ build/
 # Wird aus project.yml erzeugt (make project)
 TokenStats.xcodeproj/
 xcuserdata/
+# Windows-Port (dotnet)
+windows/**/bin/
+windows/**/obj/

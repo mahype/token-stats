@@ -26,6 +26,10 @@ und fragt nach einem Neustart erst nach Ablauf des Intervalls wieder ab — häu
 `make run` verbraucht also kein Rate-Limit. Das Verbrauchs-Aggregat liegt daneben in
 `usage.sqlite`; löschen erzwingt ein komplettes Neueinlesen (~40 s).
 
+Windows-Port (.NET 10, WPF) in `windows/`: `dotnet test` und `.\publish.ps1` dort, Details
+in [windows/README.md](windows/README.md). Änderungen an Parsern, Formaten oder Texten
+gehören in beide Fassungen.
+
 `make test` startet die App als Test-Host und beendet dabei eine laufende Instanz —
 danach `make run`. Preistabelle aktualisieren: `Scripts/update-pricing.sh`.
 README-Bilder neu rendern: `make screenshots` (nur Debug-Build; Hell und Dunkel). Alle

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="TokenStats.Tests/TokenStats.Tests.csproj" />
+  <Project Path="TokenStats/TokenStats.csproj" />
+</Solution>

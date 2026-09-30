@@ -139,6 +139,11 @@ make run
 `make run` baut die App und startet sie. Das Makefile nutzt `/Applications/Xcode.app`,
 auch wenn `xcode-select` auf die Command Line Tools zeigt.
 
+### Windows
+
+Eine Portierung als Tray-App für Windows 10/11 (nativ ARM64, auch x64) liegt in
+[`windows/`](windows/README.md) – gleiche Datenquellen und Rechnung, gebaut mit .NET 10.
+
 ## Entfernen
 
 **Bei Anmeldung starten** ausschalten, die App beenden, dann:
