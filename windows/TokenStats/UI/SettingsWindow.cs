@@ -34,13 +34,11 @@ public sealed class SettingsWindow : Window
         var root = new StackPanel { Margin = new Thickness(24, 16, 24, 24) };
 
         Section(root, "Anzeige");
-        var modes = new StackPanel { Orientation = Orientation.Horizontal };
-        foreach (var mode in MenuBarModes.All)
-        {
-            var radio = new RadioButton { Content = mode.Label(), IsChecked = settings.MenuBarMode == mode, GroupName = "mode", Margin = new Thickness(0, 0, 16, 0) };
-            radio.Checked += (_, _) => settings.MenuBarMode = mode;
-            modes.Children.Add(radio);
-        }
+        // Auswahlliste statt Radiobuttons: Fluent gibt jedem RadioButton 120 px Mindestbreite, drei passen nicht in die Spalte.
+        var modes = new ComboBox { MinWidth = 220 };
+        foreach (var mode in MenuBarModes.All) modes.Items.Add(mode.Label());
+        modes.SelectedIndex = Array.IndexOf(MenuBarModes.All, settings.MenuBarMode);
+        modes.SelectionChanged += (_, _) => settings.MenuBarMode = MenuBarModes.All[modes.SelectedIndex];
         Field(root, "Tray-Symbol", modes);
 
         var windowChoice = new ComboBox { MinWidth = 220 };
