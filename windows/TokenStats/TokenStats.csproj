@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Nur für NotifyIcon und das Kontextmenü am Tray-Symbol. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>TokenStats</AssemblyName>
+    <RootNamespace>TokenStats</RootNamespace>
+    <Product>Token Stats</Product>
+    <!-- Gleiche Nummer wie MARKETING_VERSION in project.yml. -->
+    <Version>0.2.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Erzeugt von TOKENSTATS_SCREENSHOTS (Debug), siehe windows/README.md. -->
+    <ApplicationIcon>TokenStats.ico</ApplicationIcon>
+    <RuntimeIdentifiers>win-arm64;win-x64</RuntimeIdentifiers>
+    <!-- Fluent-Theme (ThemeMode) und Dunkelmodus für WinForms sind noch experimentell; die DPI-Stufe
+         steht im Manifest, weil WPF sie dort liest (nicht über die WinForms-Eigenschaft). -->
+    <NoWarn>$(NoWarn);WPF0001;WFO5001;WFO0003</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WPF und WinForms kennen beide Application, Color, Brush …: WinForms nur voll qualifiziert. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+    <!-- WPF-Projekte lassen System.IO aus den impliziten Usings weg. -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Eine Preistabelle für beide Plattformen (Scripts/update-pricing.sh). -->
+    <EmbeddedResource Include="..\..\Sources\TokenStats\Resources\pricing.json" LogicalName="pricing.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TokenStats.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+  </ItemGroup>
+
+</Project>
