@@ -10,6 +10,12 @@ das GitHub-Release und für den Update-Dialog in der App.
   Antigravity-CLI `agy`, einmal angemeldet. Weil Google-Tokens nur eine Stunde leben,
   zeigt Token Stats danach den letzten Stand – das Kontingent ändert sich ohnehin nur,
   wenn Antigravity läuft.
+- **Ollama Cloud:** Neuer Anbieter mit Session-, Wochen- und (je nach Plan)
+  Monatslimit, den Anfragen je Modell und abgerechneten Kosten über den Plan.
+  Voraussetzung ist `ollama signin`. Lokale Modelle haben kein Kontingent und tauchen
+  nicht auf.
+- **Zusatzwerte umbrechen:** Passen die Chips unter den Balken nicht in eine Zeile,
+  fließen sie in die nächste.
 - **Tabs alphabetisch:** Die Anbieter stehen in fester Reihenfolge nach Namen statt
   nach Dringlichkeit. Beim Öffnen ist weiterhin der knappste Anbieter ausgewählt.
 - **Reset ohne Abfrage:** Ist der Reset-Zeitpunkt eines Limits erreicht, steht es sofort

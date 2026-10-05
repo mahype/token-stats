@@ -41,6 +41,7 @@ struct Screenshots {
             try await render(card(popover(selected: "claude")), appearance, to: file("limits"))
             try await render(card(popover(selected: "codex")), appearance, to: file("limits-codex"))
             try await render(card(popover(selected: "antigravity")), appearance, to: file("limits-antigravity"))
+            try await render(card(popover(selected: "ollama")), appearance, to: file("limits-ollama"))
             try await render(card(popover(selected: "claude", usage: true)), appearance, to: file("usage"))
             try await render(menuBar, appearance, to: file("menubar"))
         }
@@ -152,6 +153,20 @@ struct Screenshots {
                                 resetsAt: now.addingTimeInterval(5.3 * 24 * hour), windowLength: week),
                 ],
                 extras: [],
+                fetchedAt: now.addingTimeInterval(-60)
+            ),
+            "ollama": ProviderSnapshot(
+                account: AccountInfo(name: "Demo", plan: "Pro"),
+                windows: [
+                    LimitWindow(id: "session", name: "Session", scopeNote: "5 h", percent: 0.18,
+                                resetsAt: nil, windowLength: nil),
+                    LimitWindow(id: "weekly", name: "Woche", scopeNote: "7 d", percent: 0.41,
+                                resetsAt: nil, windowLength: nil),
+                ],
+                extras: [
+                    ExtraValue(id: "requests-glm-5.3", text: "glm-5.3 · 312 Anfragen"),
+                    ExtraValue(id: "requests-kimi-k2.6", text: "kimi-k2.6 · 48 Anfragen"),
+                ],
                 fetchedAt: now.addingTimeInterval(-60)
             ),
         ]

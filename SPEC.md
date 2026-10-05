@@ -173,6 +173,7 @@ Auf dem Zielrechner bereits vorhanden: `~/.claude`, `~/.codex`, `~/.gemini`,
 | **Claude Code** | Session 5 h · Woche 7 d · Opus/Sonnet · Extra-Verbrauch, Guthaben | Schlüsselbund `Claude Code-credentials` (macOS!) bzw. `~/.claude/.credentials.json` → `api.anthropic.com/api/oauth/usage` | v1 |
 | **Codex** | Session 5 h · Woche · Code-Review · Credits | `~/.codex/auth.json` → ChatGPT-Usage-Endpunkt | v1 |
 | **Antigravity** (Google) | Wochenlimit Gemini, Wochenlimit Claude & GPT; bei AI Pro/Ultra zusätzlich 5-h-Fenster | Schlüsselbund `gemini`/`antigravity` (Antigravity-CLI `agy`) → `daily-cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary` | v3 ✅ |
+| **Ollama Cloud** | Session 5 h · Woche · Monat (je nach Plan), Anfragen je Modell, Kosten über den Plan | `~/.ollama/id_ed25519` signiert → `ollama.com/api/usage`, `/api/me` | v3 ✅ |
 | **GitHub Copilot** | Premium-Requests/Monat, Chat-Quota | `gh`-Token / `~/.copilot` → Copilot-Usage-API | v3 |
 | **Cursor** | Monatskontingent, Usage-based-Kosten | Cursor-Anmeldung → Dashboard-API | v3 |
 | **Prepaid** (OpenRouter, DeepSeek, Moonshot, Fireworks) | Restguthaben, **echter** Betrag | API-Key aus Umgebungsvariable oder Schlüsselbund → Balance-Endpunkt | v3 |
@@ -241,6 +242,29 @@ Auf dem Zielrechner bereits vorhanden: `~/.claude`, `~/.codex`, `~/.gemini`,
 - Die Desktop-App Antigravity (VS-Code-Fork) legt ihr Token in
   `~/Library/Application Support/Antigravity/User/globalStorage/state.vscdb` ab; nicht
   genutzt, weil `agy` eine saubere Schlüsselbund-Quelle bietet.
+
+### Ollama Cloud (verifiziert 05.10.2026, Ollama 0.34.4, Plan Pro)
+
+- **Kein Token, sondern eine Signatur.** `ollama signin` verknüpft den lokalen Schlüssel
+  `~/.ollama/id_ed25519` (OpenSSH, Ed25519, unverschlüsselt) mit dem Konto. Signiert wird
+  `<METHOD>,<path>?ts=<Unix-Sekunden>`, Header `Authorization: Bearer
+  <Base64(SSH-Blob)>:<Base64(Signatur)>`, URL mit demselben `?ts=` – wie in der Ollama-CLI
+  (`auth/auth.go`, `app/ui/ui.go`). Der Schlüssel wird nur gelesen und verlässt den Mac
+  nicht; der Zeitstempel verhindert, dass eine Signatur später wiederverwendet wird.
+- **`GET /api/usage`:** `limits.session|weekly|monthly` je `{usage 0–1, models[{name,
+  request_count}]}`, dazu `activity.cost` (Dezimal-String, Kosten über den Plan, letzte
+  4 Wochen). Welche Fenster kommen, hängt vom Plan ab (Free: eventuell nur `monthly`).
+- **Keine Reset-Zeiten** – Ollama sagt nur, wie viel verbraucht ist. Die Balken haben
+  darum weder Reset noch Pace-Marke; geraten wird nichts.
+- **Keine geschätzten Restanfragen.** Aus `request_count` und `usage` ließe sich ein
+  Wert hochrechnen, er schwankt aber mit der Größe der Anfragen und täuschte
+  Genauigkeit vor. Gezeigt werden die tatsächlichen Anfragen je Modell.
+- `activity.cost` ist ein echter, abgerechneter Betrag und heißt in der App
+  „Abgerechnet“, nicht API-Vergleichswert.
+- **`POST /api/me`:** `Plan` („pro“), `Name`, `Email`.
+- Den Schlüssel gibt es auch ohne Cloud-Konto (nur lokale Modelle). Dann dürfte der
+  Server mit 401/403 antworten (nicht live geprüft), und die App zeigt „»ollama signin«
+  ausführen“.
 
 ### Verbrauch aus den Logs (verifiziert 28.09.2026)
 

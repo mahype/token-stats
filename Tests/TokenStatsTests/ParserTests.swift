@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import Testing
 @testable import TokenStats
@@ -129,6 +130,86 @@ import Testing
         let free = #"{"currentTier":{"id":"free-tier","name":"Antigravity"}}"#
         #expect(AntigravityProvider.parsePlan(Data(paid.utf8)) == "Google AI Plus")
         #expect(AntigravityProvider.parsePlan(Data(free.utf8)) == "Kostenlos")
+    }
+}
+
+// Antwortformen live geprüft am 05.10.2026 (Ollama 0.34.4, Plan Pro).
+// Die Schlüssel sind Wegwerf-Testschlüssel, mit ssh-keygen nur für diese Tests erzeugt.
+@Suite struct OllamaParserTests {
+    static let testKey = """
+    -----BEGIN OPENSSH PRIVATE KEY-----
+    b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+    QyNTUxOQAAACCFGWt6KtdxdL80acjgaOMXtFJyQ6a27gXvrnhipQVXgwAAAJj6EFwj+hBc
+    IwAAAAtzc2gtZWQyNTUxOQAAACCFGWt6KtdxdL80acjgaOMXtFJyQ6a27gXvrnhipQVXgw
+    AAAEBztlei+ykNm/xS6NUAkFFBysiODcemxYaHSHVhmn/H7oUZa3oq13F0vzRpyOBo4xe0
+    UnJDprbuBe+ueGKlBVeDAAAAD3Rva2Vuc3RhdHMtdGVzdAECAwQFBg==
+    -----END OPENSSH PRIVATE KEY-----
+    """
+    static let testPublicBlob = "AAAAC3NzaC1lZDI1NTE5AAAAIIUZa3oq13F0vzRpyOBo4xe0UnJDprbuBe+ueGKlBVeD"
+    static let encryptedKey = """
+    -----BEGIN OPENSSH PRIVATE KEY-----
+    b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABC5axZag5
+    HGvJKHGHN8DlKIAAAAGAAAAAEAAAAzAAAAC3NzaC1lZDI1NTE5AAAAICBrYw60CgLyyLUU
+    ZwFPxoI+SA/oiGQZQZ83qeTtzG6rAAAAoIFkts3nJposHT6K4w7my0AixN5PiEtLOr7FzD
+    Tc5T6EEW4RLz5/RBFk2zup5OZwTb2q55NufEJ9XS4ssRUykbEGq89OB8To3k17rqS/ATUa
+    Zd43AvzJEe+M1JNg+0kEn2xdcHWpSeOxltSKOJVPmcBFP0MvOF82xD1QQBgBkF1LvcuqTK
+    A9anyo2g9iyJeMEhNI1y0wf5sRDR+qTibdGcg=
+    -----END OPENSSH PRIVATE KEY-----
+    """
+
+    @Test func signsLikeOllamaCLI() throws {
+        let key = try #require(OllamaProvider.parsePrivateKey(Self.testKey))
+        #expect(key.publicBlob.base64EncodedString() == Self.testPublicBlob)
+
+        let header = try key.authorization(method: "GET", path: "/api/usage", timestamp: "1790000000")
+        let parts = header.split(separator: ":").map(String.init)
+        #expect(parts.count == 2)
+        #expect(parts[0] == Self.testPublicBlob)
+
+        // Öffentlicher Schlüssel = letzte 32 Byte des SSH-Blobs.
+        let publicKey = try Curve25519.Signing.PublicKey(rawRepresentation: key.publicBlob.suffix(32))
+        let signature = try #require(Data(base64Encoded: parts[1]))
+        #expect(publicKey.isValidSignature(signature, for: Data("GET,/api/usage?ts=1790000000".utf8)))
+    }
+
+    @Test func rejectsEncryptedKey() {
+        #expect(OllamaProvider.parsePrivateKey(Self.encryptedKey) == nil)
+        #expect(OllamaProvider.parsePrivateKey("kein Schlüssel") == nil)
+    }
+
+    @Test func parsesUsage() throws {
+        let json = """
+        {"limits":{"session":{"usage":0,"models":[]},
+                    "weekly":{"usage":0.031,"models":[{"name":"minimax-m3","request_count":4},
+                                                      {"name":"glm-5.3","request_count":71}]}},
+         "activity":{"cost":"1.25000","models":[],"period":{"type":"last_4_weeks"}}}
+        """
+        let snapshot = try OllamaProvider.parseUsage(Data(json.utf8))
+
+        #expect(snapshot.windows.map(\.name) == ["Session", "Woche"])
+        #expect(snapshot.windows[1].percent == 0.031)
+        #expect(snapshot.windows.allSatisfy { $0.resetsAt == nil })
+        #expect(snapshot.extras.map(\.text) == [
+            "glm-5.3 · 71 Anfragen", "minimax-m3 · 4 Anfragen", "Abgerechnet 1,25 $ / 4 Wochen",
+        ])
+    }
+
+    @Test func freeAccountWithMonthlyOnly() throws {
+        let json = #"{"limits":{"monthly":{"usage":0.5}},"activity":{"cost":"0.00000"}}"#
+        let snapshot = try OllamaProvider.parseUsage(Data(json.utf8))
+        #expect(snapshot.windows.map(\.name) == ["Monat"])
+        #expect(snapshot.extras.isEmpty)
+    }
+
+    @Test func rejectsMissingLimits() {
+        #expect(throws: ProviderError.badResponse) {
+            try OllamaProvider.parseUsage(Data(#"{"activity":{"cost":"0"}}"#.utf8))
+        }
+    }
+
+    @Test func readsPlan() {
+        let me = #"{"Name":"demo","Email":"demo@example.com","Plan":"pro"}"#
+        #expect(OllamaProvider.parseAccount(Data(me.utf8)) == AccountInfo(name: "demo", plan: "Pro"))
     }
 }
 

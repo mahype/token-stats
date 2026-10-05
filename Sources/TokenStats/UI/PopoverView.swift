@@ -304,11 +304,12 @@ private struct ProviderPage: View {
                 }
                 if !snapshot.extras.isEmpty {
                     Divider()
-                    HStack(spacing: 8) {
+                    FlowLayout(spacing: 8) {
                         ForEach(snapshot.extras) { extra in
                             Text(extra.text)
                                 .font(.system(size: 11, design: .monospaced))
                                 .foregroundStyle(.secondary)
+                                .fixedSize()
                                 .padding(.horizontal, 9)
                                 .padding(.vertical, 4)
                                 .background(RoundedRectangle(cornerRadius: 6).fill(.quaternary))
@@ -362,19 +363,22 @@ private struct MeterRow: View {
             }
             MeterBar(percent: window.percent, elapsed: elapsed, color: window.severity.color)
                 .frame(height: 6)
-            HStack {
-                if let resetsAt = window.resetsAt { Text("Reset \(Format.reset(resetsAt))") }
-                Spacer()
-                if let elapsed, let windowLength = window.windowLength {
-                    let onPace = abs(window.percent - elapsed) < Format.paceTolerance
-                    Text(Format.pace(percent: window.percent, elapsed: elapsed, windowLength: windowLength))
-                        .fontWeight(onPace ? .regular : .semibold)
-                        .foregroundStyle(onPace ? Color.secondary : window.severity.color)
+            // Ollama nennt keine Reset-Zeiten – dann bleibt die Zeile weg statt leer.
+            if window.resetsAt != nil || elapsed != nil {
+                HStack {
+                    if let resetsAt = window.resetsAt { Text("Reset \(Format.reset(resetsAt))") }
+                    Spacer()
+                    if let elapsed, let windowLength = window.windowLength {
+                        let onPace = abs(window.percent - elapsed) < Format.paceTolerance
+                        Text(Format.pace(percent: window.percent, elapsed: elapsed, windowLength: windowLength))
+                            .fontWeight(onPace ? .regular : .semibold)
+                            .foregroundStyle(onPace ? Color.secondary : window.severity.color)
+                    }
                 }
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
             }
-            .font(.system(size: 11))
-            .foregroundStyle(.secondary)
-            .monospacedDigit()
         }
     }
 }
@@ -431,5 +435,54 @@ private struct Hatch: Shape {
             x += spacing
         }
         return path
+    }
+}
+
+/// Chips nebeneinander, bei Platzmangel in die nächste Zeile – Ollama meldet je Modell einen.
+private struct FlowLayout: Layout {
+    var spacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rows = arrange(subviews, width: proposal.width ?? .infinity)
+        let width = rows.map { $0.width }.max() ?? 0
+        let height = rows.map(\.height).reduce(0, +) + spacing * CGFloat(max(rows.count - 1, 0))
+        return CGSize(width: width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for row in arrange(subviews, width: bounds.width) {
+            var x = bounds.minX
+            for index in row.indices {
+                let size = subviews[index].sizeThatFits(.unspecified)
+                subviews[index].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+                x += size.width + spacing
+            }
+            y += row.height + spacing
+        }
+    }
+
+    private struct Row {
+        var indices: [Int] = []
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+    }
+
+    private func arrange(_ subviews: Subviews, width: CGFloat) -> [Row] {
+        var rows: [Row] = []
+        var row = Row()
+        for (index, subview) in subviews.enumerated() {
+            let size = subview.sizeThatFits(.unspecified)
+            let needed = row.indices.isEmpty ? size.width : row.width + spacing + size.width
+            if needed > width, !row.indices.isEmpty {
+                rows.append(row)
+                row = Row()
+            }
+            row.width = row.indices.isEmpty ? size.width : row.width + spacing + size.width
+            row.height = max(row.height, size.height)
+            row.indices.append(index)
+        }
+        if !row.indices.isEmpty { rows.append(row) }
+        return rows
     }
 }

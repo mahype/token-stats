@@ -6,7 +6,7 @@ import SwiftUI
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = AppSettings()
-    private lazy var store = UsageStore(providers: [ClaudeProvider(), CodexProvider(), AntigravityProvider()], settings: settings)
+    private lazy var store = UsageStore(providers: [ClaudeProvider(), CodexProvider(), AntigravityProvider(), OllamaProvider()], settings: settings)
     private lazy var consumption = ConsumptionStore(settings: settings)
     private let updater = Updater()
 

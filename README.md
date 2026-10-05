@@ -6,7 +6,7 @@
 [![Release](https://img.shields.io/github/v/release/mahype/token-stats?label=release&color=blue)](https://github.com/mahype/token-stats/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/mahype/token-stats/total?label=downloads&color=blue)](https://github.com/mahype/token-stats/releases)
 [![Status: v2 in Arbeit](https://img.shields.io/badge/status-v2%20in%20Arbeit-orange.svg)](#roadmap)
-[![Anbieter: Claude Code · Codex · Antigravity](https://img.shields.io/badge/Anbieter-Claude%20Code%20%C2%B7%20Codex%20%C2%B7%20Antigravity-8A63D2.svg)](#anbieter)
+[![Anbieter: Antigravity · Claude Code · Codex · Ollama](https://img.shields.io/badge/Anbieter-Antigravity%20%C2%B7%20Claude%20Code%20%C2%B7%20Codex%20%C2%B7%20Ollama-8A63D2.svg)](#anbieter)
 [![Zugangsdaten nur lesen](https://img.shields.io/badge/Zugangsdaten-nur%20lesen-brightgreen.svg)](#was-die-app-liest-speichert-und-kontaktiert)
 [![Keine Telemetrie](https://img.shields.io/badge/Telemetrie-keine-brightgreen.svg)](#was-die-app-liest-speichert-und-kontaktiert)
 [![Keine Abhängigkeiten](https://img.shields.io/badge/Abh%C3%A4ngigkeiten-keine-brightgreen.svg)](#voraussetzungen)
@@ -14,12 +14,12 @@
 
 Menüleisten-App für macOS, die die Kontingente deiner KI-Coding-Abos anzeigt:
 Session-Fenster, Wochenlimit, Modell-Limits und Extra-Verbrauch von Claude Code,
-Codex und Antigravity (Google). Dazu eine Verbrauchsseite mit Tokenzahlen je Tag und Modell und dem
+Codex, Antigravity (Google) und Ollama Cloud. Dazu eine Verbrauchsseite mit Tokenzahlen je Tag und Modell und dem
 **API-Vergleichswert** – was derselbe Verbrauch über die API gekostet hätte.
 
 Die App beantwortet ohne Browser und ohne CLI die Frage **„Darf ich noch?“**. Sie nutzt
-die Anmeldungen, die Claude Code, Codex und die Antigravity-CLI ohnehin auf deinem Mac
-haben. Kein Konto,
+die Anmeldungen, die Claude Code, Codex, die Antigravity-CLI und Ollama ohnehin auf
+deinem Mac haben. Kein Konto,
 keine Cloud, keine Telemetrie.
 
 <p align="center">
@@ -70,14 +70,26 @@ keine Cloud, keine Telemetrie.
   </tr>
 </table>
 
-Antigravity mit den beiden Wochenlimits für Gemini sowie Claude & GPT:
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="screenshots/limits-antigravity-dark.png">
-    <img src="screenshots/limits-antigravity-light.png" width="372" alt="Antigravity-Tab mit Wochenlimit für Gemini und für Claude & GPT">
-  </picture>
-</p>
+<table>
+  <tr>
+    <th width="50%">Antigravity</th>
+    <th width="50%">Ollama Cloud</th>
+  </tr>
+  <tr>
+    <td valign="top">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="screenshots/limits-antigravity-dark.png">
+        <img src="screenshots/limits-antigravity-light.png" alt="Antigravity-Tab mit Wochenlimit für Gemini und für Claude & GPT">
+      </picture>
+    </td>
+    <td valign="top">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="screenshots/limits-ollama-dark.png">
+        <img src="screenshots/limits-ollama-light.png" alt="Ollama-Tab mit Session- und Wochenlimit und Anfragen je Modell">
+      </picture>
+    </td>
+  </tr>
+</table>
 
 Die drei Anzeige-Modi der Menüleiste:
 
@@ -106,6 +118,7 @@ Die Einstellungen – Anzeige, Stichtag des Abos und Abfrageintervall:
 | **Claude Code** | Session 5 h · Woche · Modell-Limits (Opus, Sonnet …) · Extra-Verbrauch | ✅ | v1 / v2 |
 | **Codex** | Session 5 h · Woche · Code-Review · Credits | ✅ | v1 / v2 |
 | **Antigravity** (Google) | Wochenlimit Gemini · Wochenlimit Claude & GPT · Plan (z. B. Google AI Plus) | – | v3 |
+| **Ollama Cloud** | Session 5 h · Woche · Monat (je nach Plan) · Anfragen je Modell · Kosten über den Plan | – | v3 |
 | GitHub Copilot, Cursor | – | – | geplant (v3) |
 | Prepaid (OpenRouter, DeepSeek, Moonshot, Fireworks) | echtes Restguthaben | – | geplant (v3) |
 
@@ -115,7 +128,8 @@ Oberfläche bleibt beim Hinzufügen unberührt.
 ## Voraussetzungen
 
 - macOS 14 (Sonoma) oder neuer, Apple Silicon oder Intel
-- Claude Code, Codex und/oder die Antigravity-CLI (`agy`), mindestens einmal angemeldet
+- Claude Code, Codex, die Antigravity-CLI (`agy`) und/oder Ollama (`ollama signin`),
+  mindestens einmal angemeldet
 
 Keine Pakete, kein Framework, keine Laufzeit – ein einzelnes `.app`.
 
@@ -165,7 +179,7 @@ rm -rf ~/Library/Application\ Support/TokenStats   # letzter Stand und Verbrauch
 defaults delete de.mahype.TokenStats              # Einstellungen
 ```
 
-Deine Anmeldungen bei Claude Code, Codex und Antigravity bleiben unberührt.
+Deine Anmeldungen bei Claude Code, Codex, Antigravity und Ollama bleiben unberührt.
 
 ## Was die App liest, speichert und kontaktiert
 
@@ -173,6 +187,7 @@ Deine Anmeldungen bei Claude Code, Codex und Antigravity bleiben unberührt.
 |---|---|
 | Claude-Zugangsdaten (nur lesen) | Schlüsselbund `Claude Code-credentials`, Fallback `~/.claude/.credentials.json` |
 | Codex-Zugangsdaten (nur lesen) | `~/.codex/auth.json` |
+| Ollama-Schlüssel (nur lesen, zum Signieren) | `~/.ollama/id_ed25519` – verlässt den Mac nicht, gesendet wird nur die Signatur |
 | Antigravity-Zugangsdaten (nur lesen) | Schlüsselbund `gemini` / `antigravity` (von `agy`), Projekt aus `~/.gemini/antigravity-cli/cache/` |
 | Tokenzahlen (nur lesen) | `~/.claude/projects/**/*.jsonl`, Session-Logs unter `~/.codex/` |
 | Letzter Stand der Limits | `~/Library/Application Support/TokenStats/state.json` (nur Prozente und Reset-Zeiten) |
@@ -180,6 +195,7 @@ Deine Anmeldungen bei Claude Code, Codex und Antigravity bleiben unberührt.
 | Einstellungen | UserDefaults `de.mahype.TokenStats` |
 | Claude-Kontingent | `api.anthropic.com/api/oauth/usage` |
 | Codex-Kontingent | `chatgpt.com/backend-api/wham/usage` |
+| Ollama-Kontingent und Plan | `ollama.com/api/usage` und `ollama.com/api/me` |
 | Antigravity-Kontingent und Plan | `daily-cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary` und `:loadCodeAssist` |
 | Update-Prüfung (täglich, abschaltbar) | `mahype.github.io/token-stats/appcast.xml`, Download von `github.com` |
 
@@ -237,7 +253,7 @@ Das vollständige Design mit den Begründungen hinter den Entscheidungen steht i
 - [x] **v1** – Limits für Claude und Codex, drei Anzeige-Modi, Rate-Limit-Behandlung
 - [ ] **v2** – Verbrauchsseite mit API-Vergleichswert ✅ · Mitteilungen bei 50/80/90 %
   und bei Reset
-- [ ] **v3** – Antigravity ✅ · Copilot, Cursor, Prepaid-Guthaben,
+- [ ] **v3** – Antigravity ✅ · Ollama Cloud ✅ · Copilot, Cursor, Prepaid-Guthaben,
   Claude-Account-Wechsel
 
 ## Lizenz
@@ -246,8 +262,8 @@ MIT – siehe [LICENSE](LICENSE).
 
 ## Hinweis
 
-Unabhängiges Community-Projekt, nicht verbunden mit Anthropic, OpenAI oder Google.
+Unabhängiges Community-Projekt, nicht verbunden mit Anthropic, OpenAI, Google oder Ollama.
 Claude ist eine Marke von Anthropic, Codex und ChatGPT sind Marken von OpenAI,
-Gemini und Antigravity sind Marken von Google.
+Gemini und Antigravity sind Marken von Google, Ollama ist eine Marke von Ollama Inc.
 Die abgefragten Usage-Endpunkte sind nicht dokumentiert und können sich jederzeit
 ändern.
