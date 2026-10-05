@@ -3,6 +3,13 @@
 Jede Version hat einen Abschnitt `## X.Y.Z`. `make publish` übernimmt ihn als Text für
 das GitHub-Release und für den Update-Dialog in der App.
 
+## Unveröffentlicht
+
+- **Claude-Anmeldung:** Nach „Anmeldung abgelaufen“ erkennt Token Stats ein erneuertes
+  Token jetzt innerhalb von 30 s statt erst nach dem nächsten Abfrageintervall. Der
+  Hinweis sagt genauer, was zu tun ist: Die Claude-Desktop-App erneuert das Token der
+  CLI nicht, dafür muss `claude` einmal im Terminal laufen.
+
 ## 0.2.0
 
 - **Automatische Updates:** Token Stats sucht einmal täglich nach einer neuen Version und

@@ -5,14 +5,16 @@ import Foundation
 ///
 /// Das Token wird nur gelesen und nie erneuert: Ein Refresh rotiert das
 /// Refresh-Token, und ohne Zurückschreiben wäre Claude Code danach abgemeldet.
-/// Läuft es ab, erneuert Claude Code es beim nächsten Start selbst.
+/// Läuft es ab, erneuert Claude Code es beim nächsten Start selbst – aber nur die CLI:
+/// Die Desktop-App meldet ihre Claude-Code-Sitzungen über eigene Zugangsdaten an und
+/// lässt diesen Eintrag liegen (Token lebt 8 h).
 struct ClaudeProvider: UsageProvider {
     let id = "claude"
     let displayName = "Claude"
 
     static let usageURL = URL(string: "https://api.anthropic.com/api/oauth/usage")!
     static let keychainService = "Claude Code-credentials"
-    static let hint = "Claude Code einmal starten."
+    static let hint = "»claude« im Terminal einmal starten – die Desktop-App erneuert dieses Token nicht."
 
     private var home: URL { FileManager.default.homeDirectoryForCurrentUser }
     private var credentialsFile: URL { home.appending(path: ".claude/.credentials.json") }

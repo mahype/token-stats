@@ -26,7 +26,7 @@ enum HTTP {
         guard let http = response as? HTTPURLResponse else { throw ProviderError.badResponse }
         switch http.statusCode {
         case 200: return data
-        case 401, 403: throw ProviderError.tokenExpired(hint: expiredHint)
+        case 401, 403: throw ProviderError.unauthorized(hint: expiredHint)
         case 429:
             throw ProviderError.rateLimited(retryAfter: retryAfter(http.value(forHTTPHeaderField: "Retry-After")))
         default: throw ProviderError.http(status: http.statusCode)

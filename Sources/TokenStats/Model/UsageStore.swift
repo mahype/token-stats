@@ -7,6 +7,7 @@ final class UsageStore {
     struct ProviderState: Codable, Equatable {
         var snapshot: ProviderSnapshot?
         var error: String?
+        /// Letzte Anfrage, die tatsächlich an den Endpunkt ging – Basis für den Takt.
         var lastAttempt: Date?
         /// Bis hierhin keine Abfrage – aus Retry-After nach HTTP 429.
         var retryAt: Date?
@@ -98,6 +99,7 @@ final class UsageStore {
 
     private func fetch(_ provider: any UsageProvider) {
         loading.insert(provider.id)
+        let previousAttempt = states[provider.id]?.lastAttempt
         states[provider.id, default: ProviderState()].lastAttempt = .now
         Task {
             var state = states[provider.id] ?? ProviderState()
@@ -108,6 +110,9 @@ final class UsageStore {
             } catch let error as ProviderError {
                 // Letzte Werte bleiben stehen, nie eine leere Anzeige.
                 state.error = error.message
+                // Ohne Anfrage kein Grund zu warten: Beim nächsten Timer-Tick werden die
+                // Zugangsdaten neu gelesen, damit ein von der CLI erneuertes Token sofort greift.
+                if error.isLocal { state.lastAttempt = previousAttempt }
                 if case .rateLimited(let retryAfter) = error {
                     state.retryAt = .now.addingTimeInterval(retryAfter ?? settings.refreshInterval)
                 }

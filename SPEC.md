@@ -186,6 +186,14 @@ Auf dem Zielrechner bereits vorhanden: `~/.claude`, `~/.codex`, `~/.gemini`,
   Refresh-Token; ohne Zurückschreiben wäre die CLI danach abgemeldet, und Zurückschreiben
   verbietet „Zugangsdaten nur lesen“. Abgelaufenes Token → Hinweis „Claude Code / Codex
   einmal starten“; die CLI erneuert es selbst.
+- **Die Claude-Desktop-App erneuert den Schlüsselbund-Eintrag nicht** (verifiziert
+  02.10.2026): Ihre Code-Sitzungen laufen mit Zugangsdaten der Desktop-App
+  (`CLAUDE_CODE_SDK_HAS_HOST_AUTH_REFRESH`), `Claude Code-credentials` bleibt liegen und
+  läuft nach 8 h ab. Wer nur die Desktop-App nutzt, sieht darum „Anmeldung abgelaufen“,
+  obwohl Claude funktioniert. Erst ein Start von `claude` im Terminal erneuert es
+  (`claude auth status` reicht nicht). Weil die Ablaufzeit lokal geprüft wird, zählt
+  dieser Fehler nicht gegen das Abfrageintervall: Die App liest die Zugangsdaten alle
+  30 s neu und fragt ab, sobald ein gültiges Token da ist.
 - Endpunkte (verifiziert 28.09.2026 an claudebar/codexbar und live auf diesem Mac):
   - Claude: `GET https://api.anthropic.com/api/oauth/usage`, Header
     `Authorization: Bearer …`, `anthropic-beta: oauth-2025-04-20`. Antwort:
