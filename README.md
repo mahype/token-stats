@@ -6,19 +6,20 @@
 [![Release](https://img.shields.io/github/v/release/mahype/token-stats?label=release&color=blue)](https://github.com/mahype/token-stats/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/mahype/token-stats/total?label=downloads&color=blue)](https://github.com/mahype/token-stats/releases)
 [![Status: v2 in Arbeit](https://img.shields.io/badge/status-v2%20in%20Arbeit-orange.svg)](#roadmap)
-[![Anbieter: Claude Code · Codex](https://img.shields.io/badge/Anbieter-Claude%20Code%20%C2%B7%20Codex-8A63D2.svg)](#anbieter)
+[![Anbieter: Claude Code · Codex · Antigravity](https://img.shields.io/badge/Anbieter-Claude%20Code%20%C2%B7%20Codex%20%C2%B7%20Antigravity-8A63D2.svg)](#anbieter)
 [![Zugangsdaten nur lesen](https://img.shields.io/badge/Zugangsdaten-nur%20lesen-brightgreen.svg)](#was-die-app-liest-speichert-und-kontaktiert)
 [![Keine Telemetrie](https://img.shields.io/badge/Telemetrie-keine-brightgreen.svg)](#was-die-app-liest-speichert-und-kontaktiert)
 [![Keine Abhängigkeiten](https://img.shields.io/badge/Abh%C3%A4ngigkeiten-keine-brightgreen.svg)](#voraussetzungen)
 [![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-blue.svg)](LICENSE)
 
 Menüleisten-App für macOS, die die Kontingente deiner KI-Coding-Abos anzeigt:
-Session-Fenster, Wochenlimit, Modell-Limits und Extra-Verbrauch von Claude Code und
-Codex. Dazu eine Verbrauchsseite mit Tokenzahlen je Tag und Modell und dem
+Session-Fenster, Wochenlimit, Modell-Limits und Extra-Verbrauch von Claude Code,
+Codex und Antigravity (Google). Dazu eine Verbrauchsseite mit Tokenzahlen je Tag und Modell und dem
 **API-Vergleichswert** – was derselbe Verbrauch über die API gekostet hätte.
 
 Die App beantwortet ohne Browser und ohne CLI die Frage **„Darf ich noch?“**. Sie nutzt
-die Anmeldungen, die Claude Code und Codex ohnehin auf deinem Mac haben. Kein Konto,
+die Anmeldungen, die Claude Code, Codex und die Antigravity-CLI ohnehin auf deinem Mac
+haben. Kein Konto,
 keine Cloud, keine Telemetrie.
 
 <p align="center">
@@ -69,6 +70,15 @@ keine Cloud, keine Telemetrie.
   </tr>
 </table>
 
+Antigravity mit den beiden Wochenlimits für Gemini sowie Claude & GPT:
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="screenshots/limits-antigravity-dark.png">
+    <img src="screenshots/limits-antigravity-light.png" width="372" alt="Antigravity-Tab mit Wochenlimit für Gemini und für Claude & GPT">
+  </picture>
+</p>
+
 Die drei Anzeige-Modi der Menüleiste:
 
 <p align="center">
@@ -95,7 +105,8 @@ Die Einstellungen – Anzeige, Stichtag des Abos und Abfrageintervall:
 |---|---|---|---|
 | **Claude Code** | Session 5 h · Woche · Modell-Limits (Opus, Sonnet …) · Extra-Verbrauch | ✅ | v1 / v2 |
 | **Codex** | Session 5 h · Woche · Code-Review · Credits | ✅ | v1 / v2 |
-| Gemini CLI / Antigravity, GitHub Copilot, Cursor | – | – | geplant (v3) |
+| **Antigravity** (Google) | Wochenlimit Gemini · Wochenlimit Claude & GPT · Plan (z. B. Google AI Plus) | – | v3 |
+| GitHub Copilot, Cursor | – | – | geplant (v3) |
 | Prepaid (OpenRouter, DeepSeek, Moonshot, Fireworks) | echtes Restguthaben | – | geplant (v3) |
 
 Jeder Anbieter ist eine Datei, die das Protokoll `UsageProvider` erfüllt – die
@@ -104,7 +115,7 @@ Oberfläche bleibt beim Hinzufügen unberührt.
 ## Voraussetzungen
 
 - macOS 14 (Sonoma) oder neuer, Apple Silicon oder Intel
-- Claude Code und/oder Codex, mindestens einmal angemeldet
+- Claude Code, Codex und/oder die Antigravity-CLI (`agy`), mindestens einmal angemeldet
 
 Keine Pakete, kein Framework, keine Laufzeit – ein einzelnes `.app`.
 
@@ -154,7 +165,7 @@ rm -rf ~/Library/Application\ Support/TokenStats   # letzter Stand und Verbrauch
 defaults delete de.mahype.TokenStats              # Einstellungen
 ```
 
-Deine Anmeldungen bei Claude Code und Codex bleiben unberührt.
+Deine Anmeldungen bei Claude Code, Codex und Antigravity bleiben unberührt.
 
 ## Was die App liest, speichert und kontaktiert
 
@@ -162,17 +173,21 @@ Deine Anmeldungen bei Claude Code und Codex bleiben unberührt.
 |---|---|
 | Claude-Zugangsdaten (nur lesen) | Schlüsselbund `Claude Code-credentials`, Fallback `~/.claude/.credentials.json` |
 | Codex-Zugangsdaten (nur lesen) | `~/.codex/auth.json` |
+| Antigravity-Zugangsdaten (nur lesen) | Schlüsselbund `gemini` / `antigravity` (von `agy`), Projekt aus `~/.gemini/antigravity-cli/cache/` |
 | Tokenzahlen (nur lesen) | `~/.claude/projects/**/*.jsonl`, Session-Logs unter `~/.codex/` |
 | Letzter Stand der Limits | `~/Library/Application Support/TokenStats/state.json` (nur Prozente und Reset-Zeiten) |
 | Verbrauchs-Aggregat je Tag und Modell | `~/Library/Application Support/TokenStats/usage.sqlite` |
 | Einstellungen | UserDefaults `de.mahype.TokenStats` |
 | Claude-Kontingent | `api.anthropic.com/api/oauth/usage` |
 | Codex-Kontingent | `chatgpt.com/backend-api/wham/usage` |
+| Antigravity-Kontingent und Plan | `daily-cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary` und `:loadCodeAssist` |
 | Update-Prüfung (täglich, abschaltbar) | `mahype.github.io/token-stats/appcast.xml`, Download von `github.com` |
 
 - **Zugangsdaten werden nur gelesen** – nicht kopiert, nicht ins App-Verzeichnis
   gespiegelt, nicht erneuert. Ist ein Token abgelaufen, zeigt die App einen Hinweis;
-  einmal Claude Code bzw. Codex starten genügt, die CLI erneuert es selbst.
+  einmal Claude Code bzw. Codex starten genügt, die CLI erneuert es selbst. Bei
+  Antigravity lebt das Token nur eine Stunde; danach gilt der letzte Stand, bis
+  Antigravity oder `agy` wieder läuft – vorher ändert sich das Kontingent ohnehin nicht.
 - **Nur die Anbieter-Endpunkte** werden kontaktiert, dazu einmal täglich der Update-Feed –
   ohne Systemdaten, abschaltbar unter Einstellungen → Updates. Preise stammen aus der
   mitgelieferten Tabelle, nicht aus dem Netz.
@@ -222,7 +237,7 @@ Das vollständige Design mit den Begründungen hinter den Entscheidungen steht i
 - [x] **v1** – Limits für Claude und Codex, drei Anzeige-Modi, Rate-Limit-Behandlung
 - [ ] **v2** – Verbrauchsseite mit API-Vergleichswert ✅ · Mitteilungen bei 50/80/90 %
   und bei Reset
-- [ ] **v3** – Gemini, Antigravity, Copilot, Cursor, Prepaid-Guthaben,
+- [ ] **v3** – Antigravity ✅ · Copilot, Cursor, Prepaid-Guthaben,
   Claude-Account-Wechsel
 
 ## Lizenz
@@ -231,7 +246,8 @@ MIT – siehe [LICENSE](LICENSE).
 
 ## Hinweis
 
-Unabhängiges Community-Projekt, nicht verbunden mit Anthropic oder OpenAI.
-Claude ist eine Marke von Anthropic, Codex und ChatGPT sind Marken von OpenAI.
+Unabhängiges Community-Projekt, nicht verbunden mit Anthropic, OpenAI oder Google.
+Claude ist eine Marke von Anthropic, Codex und ChatGPT sind Marken von OpenAI,
+Gemini und Antigravity sind Marken von Google.
 Die abgefragten Usage-Endpunkte sind nicht dokumentiert und können sich jederzeit
 ändern.

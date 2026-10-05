@@ -170,7 +170,7 @@ Auf dem Zielrechner bereits vorhanden: `~/.claude`, `~/.codex`, `~/.gemini`,
 |---|---|---|---|
 | **Claude Code** | Session 5 h · Woche 7 d · Opus/Sonnet · Extra-Verbrauch, Guthaben | Schlüsselbund `Claude Code-credentials` (macOS!) bzw. `~/.claude/.credentials.json` → `api.anthropic.com/api/oauth/usage` | v1 |
 | **Codex** | Session 5 h · Woche · Code-Review · Credits | `~/.codex/auth.json` → ChatGPT-Usage-Endpunkt | v1 |
-| **Gemini CLI / Antigravity** | Tages-Quota Pro & Flash, Thinking-Quota, eingebettetes Claude-5-h-Fenster | `~/.gemini/oauth_creds.json`, `~/.antigravity` Cache-JSON | v3 |
+| **Antigravity** (Google) | Wochenlimit Gemini, Wochenlimit Claude & GPT; bei AI Pro/Ultra zusätzlich 5-h-Fenster | Schlüsselbund `gemini`/`antigravity` (Antigravity-CLI `agy`) → `daily-cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary` | v3 ✅ |
 | **GitHub Copilot** | Premium-Requests/Monat, Chat-Quota | `gh`-Token / `~/.copilot` → Copilot-Usage-API | v3 |
 | **Cursor** | Monatskontingent, Usage-based-Kosten | Cursor-Anmeldung → Dashboard-API | v3 |
 | **Prepaid** (OpenRouter, DeepSeek, Moonshot, Fireworks) | Restguthaben, **echter** Betrag | API-Key aus Umgebungsvariable oder Schlüsselbund → Balance-Endpunkt | v3 |
@@ -214,6 +214,31 @@ Auf dem Zielrechner bereits vorhanden: `~/.claude`, `~/.codex`, `~/.gemini`,
 - **macOS-Unterschied zu Linux:** Claude Code legt die Zugangsdaten in den Schlüsselbund
   (Dienst `Claude Code-credentials`). Eine vorhandene `~/.claude/.credentials.json` kann
   veraltet sein — Schlüsselbund zuerst, Datei als Fallback.
+
+### Antigravity (verifiziert 05.10.2026, Google AI Plus, `agy` 1.2.17)
+
+- **Die Gemini CLI fällt weg:** Google lässt private Konten dort nicht mehr anmelden
+  („migrate to the Antigravity suite“). Quelle ist die Antigravity-CLI `agy`.
+- **Zugangsdaten:** Schlüsselbund, Dienst `gemini`, Konto `antigravity`, Wert
+  `go-keyring-base64:<Base64(JSON)>` mit `token.access_token`, `token.expiry` (ISO mit
+  Zeitzone) und `id_token` (E-Mail). Projekt-ID in
+  `~/.gemini/antigravity-cli/cache/default_project_id.txt`.
+- **Endpunkte** (POST, JSON): `retrieveUserQuotaSummary` mit `{"project": …}` liefert
+  `groups[]` („Gemini Models“, „Claude and GPT models“) mit `buckets[]` aus `bucketId`,
+  `window` (`weekly`), `resetTime`, `remainingFraction`. `loadCodeAssist` mit
+  `{"metadata": {"ideType": "ANTIGRAVITY"}}` liefert `paidTier.name` („Google AI
+  Plus“). proto3 lässt Nullwerte weg: fehlendes `remainingFraction` heißt ausgeschöpft.
+- **User-Agent muss `antigravity` enthalten**, sonst 403 „no valid license“. Die App
+  sendet `antigravity (TokenStats)` – erkennbar, wer fragt.
+- **Token lebt 1 h und wird nicht erneuert** (wie bei Claude, §4). Ein abgelaufenes
+  Token ist hier aber kein Fehler: Das Kontingent ändert sich nur, wenn Antigravity oder
+  `agy` laufen, und dann erneuern sie das Token. Die App zeigt den letzten Stand mit
+  neutralem Hinweis statt roter Meldung, und ein Fenster springt nach seinem Reset auch
+  ohne Abfrage auf 0 %. Selbst erneuern hieße, Client-ID und -Secret von `agy` in die
+  App zu übernehmen – das verbietet sich.
+- Die Desktop-App Antigravity (VS-Code-Fork) legt ihr Token in
+  `~/Library/Application Support/Antigravity/User/globalStorage/state.vscdb` ab; nicht
+  genutzt, weil `agy` eine saubere Schlüsselbund-Quelle bietet.
 
 ### Verbrauch aus den Logs (verifiziert 28.09.2026)
 

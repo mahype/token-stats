@@ -11,26 +11,34 @@ struct UsageView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            periodPicker
-
-            if let summary = consumption.summary(providerID, period) {
-                if summary.total.isZero {
-                    placeholder("Keine Einträge in diesem Zeitraum.")
-                } else {
-                    content(summary)
-                }
-            } else if let failure = consumption.failure {
-                placeholder(failure)
+            if !ConsumptionStore.providers.contains(providerID) {
+                placeholder("Für diesen Anbieter gibt es noch keine Verbrauchsauswertung.")
             } else {
-                HStack(spacing: 8) {
-                    ProgressView().controlSize(.small)
-                    Text("Verbrauch wird eingelesen …")
-                }
-                .font(.system(size: 11.5))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 24)
+                periodPicker
+                periodContent
             }
+        }
+    }
+
+    @ViewBuilder
+    private var periodContent: some View {
+        if let summary = consumption.summary(providerID, period) {
+            if summary.total.isZero {
+                placeholder("Keine Einträge in diesem Zeitraum.")
+            } else {
+                content(summary)
+            }
+        } else if let failure = consumption.failure {
+            placeholder(failure)
+        } else {
+            HStack(spacing: 8) {
+                ProgressView().controlSize(.small)
+                Text("Verbrauch wird eingelesen …")
+            }
+            .font(.system(size: 11.5))
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 24)
         }
     }
 

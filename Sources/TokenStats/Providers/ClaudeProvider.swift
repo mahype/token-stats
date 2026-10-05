@@ -52,23 +52,10 @@ struct ClaudeProvider: UsageProvider {
     /// Schlüsselbund und Datei lesen, die länger gültige Quelle gewinnt.
     /// Auf macOS ist der Schlüsselbund maßgeblich; die Datei kann veraltet sein.
     private func loadCredentials() -> Credentials? {
-        let candidates = [keychainData(), try? Data(contentsOf: credentialsFile)]
+        let candidates = [Keychain.password(service: Self.keychainService), try? Data(contentsOf: credentialsFile)]
             .compactMap { $0 }
             .compactMap(Self.parseCredentials)
         return candidates.max { ($0.expiresAt ?? .distantPast) < ($1.expiresAt ?? .distantPast) }
-    }
-
-    private func keychainData() -> Data? {
-        let process = Process()
-        process.executableURL = URL(filePath: "/usr/bin/security")
-        process.arguments = ["find-generic-password", "-s", Self.keychainService, "-w"]
-        let output = Pipe()
-        process.standardOutput = output
-        process.standardError = FileHandle.nullDevice
-        do { try process.run() } catch { return nil }
-        let data = output.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-        return process.terminationStatus == 0 ? data : nil
     }
 
     static func parseCredentials(_ data: Data) -> Credentials? {

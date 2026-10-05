@@ -5,6 +5,13 @@ das GitHub-Release und für den Update-Dialog in der App.
 
 ## Unveröffentlicht
 
+- **Antigravity (Google):** Neuer Anbieter mit den Wochenlimits für Gemini und für
+  Claude & GPT sowie dem Plan (z. B. „Google AI Plus“). Voraussetzung ist die
+  Antigravity-CLI `agy`, einmal angemeldet. Weil Google-Tokens nur eine Stunde leben,
+  zeigt Token Stats danach den letzten Stand – das Kontingent ändert sich ohnehin nur,
+  wenn Antigravity läuft.
+- **Reset ohne Abfrage:** Ist der Reset-Zeitpunkt eines Limits erreicht, steht es sofort
+  auf 0 %, auch wenn gerade keine Abfrage möglich ist.
 - **Claude-Anmeldung:** Nach „Anmeldung abgelaufen“ erkennt Token Stats ein erneuertes
   Token jetzt innerhalb von 30 s statt erst nach dem nächsten Abfrageintervall. Der
   Hinweis sagt genauer, was zu tun ist: Die Claude-Desktop-App erneuert das Token der

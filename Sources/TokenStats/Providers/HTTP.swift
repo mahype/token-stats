@@ -12,7 +12,20 @@ enum HTTP {
 
     /// GET mit Bearer-Token. Wirft `ProviderError` für alles außer 200.
     static func getJSON(_ url: URL, headers: [String: String], expiredHint: String) async throws -> Data {
+        try await send(URLRequest(url: url), headers: headers, expiredHint: expiredHint)
+    }
+
+    /// POST mit JSON-Body – die Google-Endpunkte sind RPCs, auch wenn sie nur lesen.
+    static func postJSON(_ url: URL, body: [String: Any], headers: [String: String], expiredHint: String) async throws -> Data {
         var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        return try await send(request, headers: headers, expiredHint: expiredHint)
+    }
+
+    private static func send(_ request: URLRequest, headers: [String: String], expiredHint: String) async throws -> Data {
+        var request = request
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         for (key, value) in headers { request.setValue(value, forHTTPHeaderField: key) }
 
@@ -60,5 +73,22 @@ enum JWT {
         while base64.count % 4 != 0 { base64 += "=" }
         guard let data = Data(base64Encoded: base64) else { return nil }
         return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+    }
+}
+
+enum Keychain {
+    /// Generisches Passwort über `/usr/bin/security` – so legen die CLIs ihre Einträge an,
+    /// und es gibt keine Rückfrage bei jedem neuen (ad-hoc-signierten) Build.
+    static func password(service: String, account: String? = nil) -> Data? {
+        let process = Process()
+        process.executableURL = URL(filePath: "/usr/bin/security")
+        process.arguments = ["find-generic-password", "-s", service] + (account.map { ["-a", $0] } ?? []) + ["-w"]
+        let output = Pipe()
+        process.standardOutput = output
+        process.standardError = FileHandle.nullDevice
+        do { try process.run() } catch { return nil }
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return process.terminationStatus == 0 ? data : nil
     }
 }

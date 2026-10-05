@@ -7,6 +7,8 @@ final class UsageStore {
     struct ProviderState: Codable, Equatable {
         var snapshot: ProviderSnapshot?
         var error: String?
+        /// Hinweis ohne Fehlercharakter, z. B. „Stand der letzten Nutzung“.
+        var note: String?
         /// Letzte Anfrage, die tatsächlich an den Endpunkt ging – Basis für den Takt.
         var lastAttempt: Date?
         /// Bis hierhin keine Abfrage – aus Retry-After nach HTTP 429.
@@ -88,6 +90,7 @@ final class UsageStore {
 
     func refresh(manual: Bool) {
         let now = Date.now
+        rollOverResets(now: now)
         for provider in installedProviders where !loading.contains(provider.id) {
             let state = states[provider.id] ?? ProviderState()
             if state.isRateLimited { continue }
@@ -106,10 +109,17 @@ final class UsageStore {
             do {
                 state.snapshot = try await provider.fetch()
                 state.error = nil
+                state.note = nil
                 state.retryAt = nil
             } catch let error as ProviderError {
                 // Letzte Werte bleiben stehen, nie eine leere Anzeige.
-                state.error = error.message
+                if case .waitingForToken = error {
+                    state.note = error.message
+                    state.error = nil
+                } else {
+                    state.error = error.message
+                    state.note = nil
+                }
                 // Ohne Anfrage kein Grund zu warten: Beim nächsten Timer-Tick werden die
                 // Zugangsdaten neu gelesen, damit ein von der CLI erneuertes Token sofort greift.
                 if error.isLocal { state.lastAttempt = previousAttempt }
@@ -122,6 +132,16 @@ final class UsageStore {
             states[provider.id] = state
             loading.remove(provider.id)
             saveCache()
+        }
+    }
+
+    /// Ein Fenster, dessen Reset vorbei ist, steht ohne neue Abfrage auf 0 %. Wichtig für
+    /// Anbieter, die nur selten abgefragt werden können (Antigravity), aber auch bei Rate-Limit.
+    private func rollOverResets(now: Date) {
+        for (id, state) in states {
+            guard var snapshot = state.snapshot else { continue }
+            snapshot.windows = snapshot.windows.map { $0.rolledOver(now: now) }
+            if snapshot != state.snapshot { states[id]?.snapshot = snapshot }
         }
     }
 

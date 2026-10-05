@@ -40,6 +40,7 @@ struct Screenshots {
 
             try await render(card(popover(selected: "claude")), appearance, to: file("limits"))
             try await render(card(popover(selected: "codex")), appearance, to: file("limits-codex"))
+            try await render(card(popover(selected: "antigravity")), appearance, to: file("limits-antigravity"))
             try await render(card(popover(selected: "claude", usage: true)), appearance, to: file("usage"))
             try await render(menuBar, appearance, to: file("menubar"))
         }
@@ -140,6 +141,17 @@ struct Screenshots {
                                 resetsAt: now.addingTimeInterval(4.1 * 24 * hour), windowLength: week),
                 ],
                 extras: [ExtraValue(id: "credits", text: "Credits unbegrenzt")],
+                fetchedAt: now.addingTimeInterval(-60)
+            ),
+            "antigravity": ProviderSnapshot(
+                account: AccountInfo(name: "Demo", plan: "Google AI Plus"),
+                windows: [
+                    LimitWindow(id: "gemini-weekly", name: "Gemini", scopeNote: "Wochenlimit", percent: 0.35,
+                                resetsAt: now.addingTimeInterval(5.3 * 24 * hour), windowLength: week),
+                    LimitWindow(id: "3p-weekly", name: "Claude & GPT", scopeNote: "Wochenlimit", percent: 0.12,
+                                resetsAt: now.addingTimeInterval(5.3 * 24 * hour), windowLength: week),
+                ],
+                extras: [],
                 fetchedAt: now.addingTimeInterval(-60)
             ),
         ]

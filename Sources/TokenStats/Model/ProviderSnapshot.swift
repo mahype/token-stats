@@ -28,6 +28,20 @@ struct LimitWindow: Codable, Equatable, Sendable, Identifiable {
 
     var severity: Severity { Severity(percent: percent) }
 
+    /// Nach dem Reset: 0 % und – bei bekannter Fensterlänge – der nächste Reset.
+    func rolledOver(now: Date = .now) -> LimitWindow {
+        guard let resetsAt, resetsAt <= now else { return self }
+        var window = self
+        window.percent = 0
+        if let windowLength, windowLength > 0 {
+            let periods = (now.timeIntervalSince(resetsAt) / windowLength).rounded(.down) + 1
+            window.resetsAt = resetsAt.addingTimeInterval(periods * windowLength)
+        } else {
+            window.resetsAt = nil
+        }
+        return window
+    }
+
     /// Anteil der verstrichenen Fensterzeit, für die Pace-Marke.
     func elapsedFraction(now: Date = .now) -> Double? {
         guard let resetsAt, let windowLength, windowLength > 0 else { return nil }

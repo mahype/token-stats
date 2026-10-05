@@ -80,6 +80,72 @@ import Testing
     }
 }
 
+// Antwortformen live geprüft am 05.10.2026 (Google AI Plus, Antigravity-CLI 1.2.17).
+@Suite struct AntigravityParserTests {
+    @Test func parsesQuotaSummary() throws {
+        let json = """
+        {"groups":[
+          {"displayName":"Gemini Models","buckets":[
+            {"bucketId":"gemini-weekly","displayName":"Weekly Limit Remaining","window":"weekly",
+             "resetTime":"2030-01-08T09:40:51Z","remainingFraction":0.9731712}]},
+          {"displayName":"Claude and GPT models","buckets":[
+            {"bucketId":"3p-weekly","displayName":"Weekly Limit Remaining","window":"weekly",
+             "resetTime":"2030-01-08T09:43:03Z"}]}
+        ]}
+        """
+        let snapshot = try AntigravityProvider.parseSummary(Data(json.utf8))
+
+        #expect(snapshot.windows.map(\.name) == ["Gemini", "Claude & GPT"])
+        #expect(abs(snapshot.windows[0].percent - 0.0268288) < 1e-6)
+        #expect(snapshot.windows[0].scopeNote == "Wochenlimit")
+        #expect(snapshot.windows[0].windowLength == TimeInterval(7 * 24 * 3600))
+        #expect(snapshot.windows[0].resetsAt != nil)
+        #expect(snapshot.windows[1].percent == 1, "proto3 lässt remainingFraction 0 weg")
+    }
+
+    @Test func rejectsEmptySummary() {
+        #expect(throws: ProviderError.badResponse) {
+            try AntigravityProvider.parseSummary(Data(#"{"groups":[]}"#.utf8))
+        }
+    }
+
+    @Test func readsGoKeyringCredentials() throws {
+        let payload = #"{"email":"demo@example.com"}"#
+        let idToken = "e30." + Data(payload.utf8).base64EncodedString() + ".sig"
+        let json = #"{"token":{"access_token":"ya29.demo","token_type":"Bearer","refresh_token":"1//demo","#
+            + #""expiry":"2030-01-01T12:40:22.44965+02:00"},"auth_method":"consumer","id_token":"\#(idToken)"}"#
+        let stored = "go-keyring-base64:" + Data(json.utf8).base64EncodedString()
+        let credentials = try #require(AntigravityProvider.parseCredentials(Data(stored.utf8)))
+
+        #expect(credentials.accessToken == "ya29.demo")
+        let expected = try #require(ISO8601DateFormatter().date(from: "2030-01-01T10:40:22Z"))
+        let expiresAt = try #require(credentials.expiresAt, "Datum mit Sekundenbruchteilen und Zeitzone")
+        #expect(abs(expiresAt.timeIntervalSince(expected)) < 1)
+        #expect(credentials.email == "demo@example.com")
+    }
+
+    @Test func prefersPaidPlan() {
+        let paid = #"{"currentTier":{"id":"free-tier","name":"Antigravity"},"paidTier":{"id":"g1-plus-tier","name":"Google AI Plus"}}"#
+        let free = #"{"currentTier":{"id":"free-tier","name":"Antigravity"}}"#
+        #expect(AntigravityProvider.parsePlan(Data(paid.utf8)) == "Google AI Plus")
+        #expect(AntigravityProvider.parsePlan(Data(free.utf8)) == "Kostenlos")
+    }
+}
+
+@Suite struct RolloverTests {
+    @Test func windowResetsToZeroAfterResetTime() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        let week: TimeInterval = 7 * 24 * 3600
+        let window = LimitWindow(id: "w", name: "Gemini", scopeNote: nil, percent: 0.4,
+                                 resetsAt: now.addingTimeInterval(-3600), windowLength: week)
+        let rolled = window.rolledOver(now: now)
+
+        #expect(rolled.percent == 0)
+        #expect(rolled.resetsAt == now.addingTimeInterval(week - 3600))
+        #expect(window.rolledOver(now: now.addingTimeInterval(-7200)) == window, "vor dem Reset unverändert")
+    }
+}
+
 @Suite struct FormatTests {
     @Test func severityThresholds() {
         #expect(Severity(percent: 0.49) == .ok)

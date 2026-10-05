@@ -15,6 +15,9 @@ enum ProviderError: Error, Equatable {
     case tokenExpired(hint: String)
     /// Server hat das Token abgewiesen (HTTP 401/403).
     case unauthorized(hint: String)
+    /// Token abgelaufen, aber kein Fehler: Der Anbieter erneuert es bei der nächsten
+    /// Nutzung, und bis dahin ändert sich auch das Kontingent nicht (Antigravity).
+    case waitingForToken(hint: String)
     case rateLimited(retryAfter: TimeInterval?)
     case http(status: Int)
     case badResponse
@@ -24,6 +27,7 @@ enum ProviderError: Error, Equatable {
         switch self {
         case .notLoggedIn(let hint): "Nicht angemeldet. \(hint)"
         case .tokenExpired(let hint), .unauthorized(let hint): "Anmeldung abgelaufen. \(hint)"
+        case .waitingForToken(let hint): hint
         case .rateLimited: "Abfragelimit erreicht."
         case .http(let status): "Server antwortet mit HTTP \(status)."
         case .badResponse: "Unerwartete Antwort vom Server."
@@ -35,7 +39,7 @@ enum ProviderError: Error, Equatable {
     /// also zählt der Versuch nicht gegen das Abfrageintervall.
     var isLocal: Bool {
         switch self {
-        case .notLoggedIn, .tokenExpired: true
+        case .notLoggedIn, .tokenExpired, .waitingForToken: true
         default: false
         }
     }

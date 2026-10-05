@@ -120,6 +120,9 @@ final class ConsumptionStore {
         }
     }
 
+    /// Anbieter, deren Logs ausgewertet werden.
+    static let providers = ["claude", "codex"]
+
     func summary(_ provider: String, _ period: UsagePeriod) -> UsageSummary? {
         summaries[provider]?[period]
     }
@@ -141,7 +144,7 @@ final class ConsumptionStore {
         Task {
             await ledger.scan()
             var result: [String: [UsagePeriod: UsageSummary]] = [:]
-            for provider in ["claude", "codex"] {
+            for provider in Self.providers {
                 for period in UsagePeriod.allCases {
                     let range = period.range(billingDay: billingDay)
                     let rows = await ledger.rows(

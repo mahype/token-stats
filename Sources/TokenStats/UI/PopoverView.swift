@@ -328,13 +328,16 @@ private struct StatusLine: View {
             label("pause.circle", "Abfrage pausiert (Rate-Limit) · wieder ab \(Format.reset(retryAt))", .warn)
         } else if let error = state.error {
             label("exclamationmark.triangle", state.snapshot == nil ? error : "\(error) Zeige letzten Stand.", .crit)
+        } else if let note = state.note {
+            let stand = state.snapshot.map { " Abgefragt \(Format.ago($0.fetchedAt))." } ?? ""
+            label("clock", note + stand, nil)
         }
     }
 
-    private func label(_ symbol: String, _ text: String, _ severity: Severity) -> some View {
+    private func label(_ symbol: String, _ text: String, _ severity: Severity?) -> some View {
         Label(text, systemImage: symbol)
             .font(.system(size: 11))
-            .foregroundStyle(severity.color)
+            .foregroundStyle(severity.map { AnyShapeStyle($0.color) } ?? AnyShapeStyle(.secondary))
             .fixedSize(horizontal: false, vertical: true)
     }
 }
