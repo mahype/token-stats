@@ -7,13 +7,15 @@ das GitHub-Release und für den Update-Dialog in der App.
 
 - **Antigravity (Google):** Neuer Anbieter mit den Wochenlimits für Gemini und für
   Claude & GPT sowie dem Plan (z. B. „Google AI Plus“). Voraussetzung ist die
-  Antigravity-CLI `agy`, einmal angemeldet. Weil Google-Tokens nur eine Stunde leben,
-  zeigt Token Stats danach den letzten Stand – das Kontingent ändert sich ohnehin nur,
-  wenn Antigravity läuft.
+  Antigravity-CLI `agy`, einmal angemeldet. Weil Google-Tokens nur eine Stunde leben
+  und nur `agy` sie erneuert, zeigt Token Stats danach den letzten Stand mit Hinweis.
 - **Ollama Cloud:** Neuer Anbieter mit Session-, Wochen- und (je nach Plan)
   Monatslimit, den Anfragen je Modell und abgerechneten Kosten über den Plan.
   Voraussetzung ist `ollama signin`. Lokale Modelle haben kein Kontingent und tauchen
   nicht auf.
+- **Wie aktuell sind die Zahlen?** Neuer README-Abschnitt: Was jeder Anbieter braucht,
+  damit die Limits aktuell bleiben. Die Verbrauchsseite sagt jetzt ausdrücklich, dass
+  sie nur Nutzung auf diesem Mac enthält.
 - **Zusatzwerte umbrechen:** Passen die Chips unter den Balken nicht in eine Zeile,
   fließen sie in die nächste.
 - **Tabs alphabetisch:** Die Anbieter stehen in fester Reihenfolge nach Namen statt

@@ -3,10 +3,11 @@ import Foundation
 /// Antigravity (Google): OAuth-Token der Antigravity-CLI `agy` aus dem Schlüsselbund
 /// → `daily-cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary`.
 ///
-/// Google-Tokens leben nur 1 h, und erneuert werden sie nur, während `agy` oder die
-/// Antigravity-App laufen. Das Kontingent ändert sich aber auch nur dann – ein
-/// abgelaufenes Token ist hier also kein Fehler, sondern heißt „letzter Stand gilt“.
-/// Wie bei Claude wird nichts erneuert und nichts zurückgeschrieben.
+/// Google-Tokens leben nur 1 h und werden nur erneuert, während `agy` auf diesem Mac
+/// läuft – die Antigravity-Desktop-App hat ein eigenes Token. Ein abgelaufenes Token ist
+/// kein Fehler: Die App zeigt den letzten Stand mit Hinweis, denn Nutzung auf anderen
+/// Geräten oder in der Desktop-App fehlt bis zum nächsten `agy`-Start. Wie bei Claude
+/// wird nichts erneuert und nichts zurückgeschrieben.
 struct AntigravityProvider: UsageProvider {
     let id = "antigravity"
     let displayName = "Antigravity"
@@ -20,7 +21,7 @@ struct AntigravityProvider: UsageProvider {
     static let keychainAccount = "antigravity"
     static let userAgent = "antigravity (TokenStats)"
     static let loginHint = "»agy« im Terminal starten und mit Google anmelden."
-    static let waitingHint = "Stand der letzten Nutzung – aktualisiert sich, sobald Antigravity oder »agy« läuft."
+    static let waitingHint = "Stand der letzten »agy«-Sitzung. Aktualisiert sich, sobald »agy« auf diesem Mac läuft – Nutzung auf anderen Geräten oder in der Antigravity-App fehlt bis dahin."
 
     private var cliDirectory: URL {
         FileManager.default.homeDirectoryForCurrentUser.appending(path: ".gemini/antigravity-cli")

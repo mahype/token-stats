@@ -96,7 +96,7 @@ struct UsageView: View {
     }
 
     private func footnote(_ summary: UsageSummary) -> String {
-        var text = "Lokale Tokenzahlen aus den Session-Logs"
+        var text = "Tokenzahlen aus den Session-Logs dieses Macs – Nutzung auf anderen Geräten fehlt"
         if showMoney {
             let asOf = consumption.prices.asOf.map { " (Stand \($0.formatted(.dateTime.month(.twoDigits).year().locale(Format.locale))))" } ?? ""
             text += " × Listenpreis\(asOf), inkl. Cache-Tarife. Keine Abrechnungsdaten – nur, was derselbe Verbrauch über die API gekostet hätte."

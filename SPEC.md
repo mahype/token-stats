@@ -233,11 +233,13 @@ Auf dem Zielrechner bereits vorhanden: `~/.claude`, `~/.codex`, `~/.gemini`,
   Plus“). proto3 lässt Nullwerte weg: fehlendes `remainingFraction` heißt ausgeschöpft.
 - **User-Agent muss `antigravity` enthalten**, sonst 403 „no valid license“. Die App
   sendet `antigravity (TokenStats)` – erkennbar, wer fragt.
-- **Token lebt 1 h und wird nicht erneuert** (wie bei Claude, §4). Ein abgelaufenes
-  Token ist hier aber kein Fehler: Das Kontingent ändert sich nur, wenn Antigravity oder
-  `agy` laufen, und dann erneuern sie das Token. Die App zeigt den letzten Stand mit
-  neutralem Hinweis statt roter Meldung, und ein Fenster springt nach seinem Reset auch
-  ohne Abfrage auf 0 %. Selbst erneuern hieße, Client-ID und -Secret von `agy` in die
+- **Token lebt 1 h und wird nicht erneuert** (wie bei Claude, §4). Erneuert wird es nur,
+  während `agy` auf diesem Mac läuft; die Antigravity-Desktop-App hat ein eigenes Token
+  (s. u.), genau wie die Claude-Desktop-App. Ein abgelaufenes Token ist trotzdem kein
+  Fehler, sondern der Normalfall zwischen zwei `agy`-Sitzungen: Die App zeigt den
+  letzten Stand mit grauem Hinweis, der sagt, dass Nutzung auf anderen Geräten oder in
+  der Desktop-App bis zum nächsten `agy`-Start fehlt. Ein Fenster springt nach seinem
+  Reset auch ohne Abfrage auf 0 %. Selbst erneuern hieße, Client-ID und -Secret von `agy` in die
   App zu übernehmen – das verbietet sich.
 - Die Desktop-App Antigravity (VS-Code-Fork) legt ihr Token in
   `~/Library/Application Support/Antigravity/User/globalStorage/state.vscdb` ab; nicht
@@ -265,6 +267,14 @@ Auf dem Zielrechner bereits vorhanden: `~/.claude`, `~/.codex`, `~/.gemini`,
 - Den Schlüssel gibt es auch ohne Cloud-Konto (nur lokale Modelle). Dann dürfte der
   Server mit 401/403 antworten (nicht live geprüft), und die App zeigt „»ollama signin«
   ausführen“.
+
+### Aktualität je Anbieter (Stand 05.10.2026)
+
+Limits sind kontoweit (alle Geräte, Browser, Desktop-Apps), brauchen aber ein gültiges
+Token, das nur die CLI auf diesem Mac erneuert. Lebensdauer: Claude 8 h, Codex 10 Tage,
+Antigravity 1 h, Ollama unbegrenzt (Schlüssel statt Token, Ollama muss nicht laufen).
+Der Verbrauch kommt aus den lokalen Logs und enthält nur diesen Mac – die Fußnote der
+Seite sagt das ausdrücklich. Übersicht für Nutzer: README „Wie aktuell sind die Zahlen?“.
 
 ### Verbrauch aus den Logs (verifiziert 28.09.2026)
 

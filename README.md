@@ -181,6 +181,25 @@ defaults delete de.mahype.TokenStats              # Einstellungen
 
 Deine Anmeldungen bei Claude Code, Codex, Antigravity und Ollama bleiben unberührt.
 
+## Wie aktuell sind die Zahlen?
+
+**Limits** kommen vom Anbieter und gelten für das ganze Konto – Nutzung auf anderen
+Geräten, im Browser oder in Desktop-Apps ist enthalten. Abgefragt wird im eingestellten
+Intervall (mindestens 5 Minuten). Dafür braucht die App ein gültiges Token, und das
+erneuert nur die jeweilige CLI auf diesem Mac:
+
+| Anbieter | Limits aktuell, solange … | Sonst |
+|---|---|---|
+| **Antigravity** | `agy` in der letzten Stunde auf diesem Mac lief | letzter Stand mit grauem Hinweis; Nutzung anderswo fehlt bis zum nächsten `agy`-Start. Die Antigravity-Desktop-App erneuert das Token nicht. |
+| **Claude Code** | `claude` in den letzten 8 Stunden im Terminal lief | „Anmeldung abgelaufen“ mit letztem Stand. Die Claude-Desktop-App erneuert das Token nicht. |
+| **Codex** | Codex in den letzten 10 Tagen auf diesem Mac lief | „Anmeldung abgelaufen“ mit letztem Stand |
+| **Ollama Cloud** | immer – Ollama muss nicht laufen, der Schlüssel läuft nicht ab | – |
+
+Ist der Reset-Zeitpunkt eines Limits erreicht, steht es auch ohne neue Abfrage auf 0 %.
+
+**Verbrauch** liest die Session-Logs **dieses Macs**. Was du auf einem anderen Rechner,
+im Browser oder in einer Desktop-App verbrauchst, fehlt dort.
+
 ## Was die App liest, speichert und kontaktiert
 
 | Was | Wo |
@@ -201,9 +220,9 @@ Deine Anmeldungen bei Claude Code, Codex, Antigravity und Ollama bleiben unberü
 
 - **Zugangsdaten werden nur gelesen** – nicht kopiert, nicht ins App-Verzeichnis
   gespiegelt, nicht erneuert. Ist ein Token abgelaufen, zeigt die App einen Hinweis;
-  einmal Claude Code bzw. Codex starten genügt, die CLI erneuert es selbst. Bei
-  Antigravity lebt das Token nur eine Stunde; danach gilt der letzte Stand, bis
-  Antigravity oder `agy` wieder läuft – vorher ändert sich das Kontingent ohnehin nicht.
+  einmal Claude Code bzw. Codex starten genügt, die CLI erneuert es selbst. Wie lange
+  die Zahlen ohne CLI aktuell bleiben, steht unter
+  [Wie aktuell sind die Zahlen?](#wie-aktuell-sind-die-zahlen)
 - **Nur die Anbieter-Endpunkte** werden kontaktiert, dazu einmal täglich der Update-Feed –
   ohne Systemdaten, abschaltbar unter Einstellungen → Updates. Preise stammen aus der
   mitgelieferten Tabelle, nicht aus dem Netz.
