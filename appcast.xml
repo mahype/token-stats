@@ -5,6 +5,24 @@
     <link>https://mahype.github.io/token-stats/appcast.xml</link>
     <language>de</language>
     <item>
+      <title>Version 0.3.0</title>
+      <pubDate>Mon, 05 Oct 2026 11:52:36 GMT</pubDate>
+      <sparkle:version>0.3.0</sparkle:version>
+      <sparkle:shortVersionString>0.3.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description>&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Antigravity (Google):&lt;/strong&gt; Neuer Anbieter mit den Wochenlimits für Gemini und für Claude &amp;amp; GPT sowie dem Plan (z. B. „Google AI Plus“). Voraussetzung ist die Antigravity-CLI &lt;code&gt;agy&lt;/code&gt;, einmal angemeldet. Weil Google-Tokens nur eine Stunde leben und nur &lt;code&gt;agy&lt;/code&gt; sie erneuert, zeigt Token Stats danach den letzten Stand mit Hinweis.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Ollama Cloud:&lt;/strong&gt; Neuer Anbieter mit Session-, Wochen- und (je nach Plan) Monatslimit, den Anfragen je Modell und abgerechneten Kosten über den Plan. Voraussetzung ist &lt;code&gt;ollama signin&lt;/code&gt;. Lokale Modelle haben kein Kontingent und tauchen nicht auf.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Wie aktuell sind die Zahlen?&lt;/strong&gt; Neuer README-Abschnitt: Was jeder Anbieter braucht, damit die Limits aktuell bleiben. Die Verbrauchsseite sagt jetzt ausdrücklich, dass sie nur Nutzung auf diesem Mac enthält.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Zusatzwerte umbrechen:&lt;/strong&gt; Passen die Chips unter den Balken nicht in eine Zeile, fließen sie in die nächste.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Tabs alphabetisch:&lt;/strong&gt; Die Anbieter stehen in fester Reihenfolge nach Namen statt nach Dringlichkeit. Beim Öffnen ist weiterhin der knappste Anbieter ausgewählt.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Reset ohne Abfrage:&lt;/strong&gt; Ist der Reset-Zeitpunkt eines Limits erreicht, steht es sofort auf 0 %, auch wenn gerade keine Abfrage möglich ist.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Claude-Anmeldung:&lt;/strong&gt; Nach „Anmeldung abgelaufen“ erkennt Token Stats ein erneuertes Token jetzt innerhalb von 30 s statt erst nach dem nächsten Abfrageintervall. Der Hinweis sagt genauer, was zu tun ist: Die Claude-Desktop-App erneuert das Token der CLI nicht, dafür muss &lt;code&gt;claude&lt;/code&gt; einmal im Terminal laufen.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Preistabelle:&lt;/strong&gt; API-Vergleichswerte jetzt auch für GPT-6 (Sol, 6.1 Sol, Luna, Astra) und Claude Sonnet 5.5. Stand 05.10.2026.&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <enclosure url="https://github.com/mahype/token-stats/releases/download/v0.3.0/Token-Stats-0.3.0.dmg" length="2104402" type="application/octet-stream" sparkle:edSignature="1s22BXRr0CU5GwzWeiSrZBHI4Tq9D88bQemtHF+8JaM+yu7bQO721sH1Zmxvm8n4gE3xb+shbEzCqPE2In6iCA==" />
+    </item>
+    <item>
       <title>Version 0.2.0</title>
       <pubDate>Mon, 28 Sep 2026 20:40:00 GMT</pubDate>
       <sparkle:version>0.2.0</sparkle:version>
