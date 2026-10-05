@@ -31,7 +31,9 @@ struct PopoverView: View {
 
     var body: some View {
         let providers = store.sortedProviders
-        let selected = providers.first { $0.id == selectedID } ?? providers.first
+        // Beim Öffnen ist der knappste Anbieter aktiv, die Tab-Reihenfolge bleibt fest.
+        let activeID = selectedID ?? store.tightest?.providerID
+        let selected = providers.first { $0.id == activeID } ?? providers.first
 
         VStack(spacing: 0) {
             header

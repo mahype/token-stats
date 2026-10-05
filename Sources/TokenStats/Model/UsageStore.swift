@@ -43,13 +43,9 @@ final class UsageStore {
         providers.filter { $0.isInstalled() }
     }
 
-    /// Nach Dringlichkeit sortiert: knappster Anbieter zuerst (SPEC §3.2).
+    /// Alphabetisch nach Namen, damit die Tabs nicht springen (SPEC §3.2).
     var sortedProviders: [any UsageProvider] {
-        installedProviders.enumerated().sorted { lhs, rhs in
-            let l = states[lhs.element.id]?.snapshot?.tightestWindow?.percent ?? -1
-            let r = states[rhs.element.id]?.snapshot?.tightestWindow?.percent ?? -1
-            return l == r ? lhs.offset < rhs.offset : l > r
-        }.map(\.element)
+        installedProviders.sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
     }
 
     /// Wert für Menüleiste und Popover-Kopf – beide zeigen immer denselben.

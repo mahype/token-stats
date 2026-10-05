@@ -58,11 +58,13 @@ Das knappste Limit steht hier nicht mehr (Entscheidung 28.09.2026): Es ist schon
 Menüleiste sichtbar und in den Tab-Punkten; doppelt wirkte der Kopf überladen.
 
 ### 3.2 Tab-Leiste — ein Tab je Client
-`Claude · Codex · Gemini · Copilot · +2`
+`Antigravity · Claude · Codex · Copilot · +2`
 
 - Jeder Tab trägt einen 5-pt-Statuspunkt in der Zustandsfarbe. Damit ist der kritische
   Anbieter ohne Klick sichtbar.
-- **Sortierung nach Dringlichkeit:** knappster Client links, beim Öffnen aktiv.
+- **Alphabetisch nach Namen**, beim Öffnen ist der knappste Client aktiv. Ursprünglich
+  stand der knappste links – dadurch sprang die Reihenfolge mit jedem Abruf und wirkte
+  willkürlich. Dringlichkeit zeigen Statuspunkt und aktiver Tab.
 - Passen nicht alle Tabs in die Breite, sammelt `+n` den Rest in einem Menü.
 - Tabs statt langer Liste, weil die Popover-Höhe sonst mit jedem Anbieter wächst.
 
