@@ -12,7 +12,7 @@
     <RootNamespace>TokenStats</RootNamespace>
     <Product>Token Stats</Product>
     <!-- Gleiche Nummer wie MARKETING_VERSION in project.yml. -->
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Erzeugt von TOKENSTATS_SCREENSHOTS (Debug), siehe windows/README.md. -->
     <ApplicationIcon>TokenStats.ico</ApplicationIcon>
@@ -41,6 +41,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <!-- Ed25519 für die Ollama-Signatur; .NET bringt es nicht mit. -->
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
   </ItemGroup>
 
 </Project>

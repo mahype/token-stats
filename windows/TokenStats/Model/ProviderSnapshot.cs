@@ -33,6 +33,26 @@ public sealed class LimitWindow
     [JsonIgnore]
     public Severity Severity => SeverityOf.Percent(Percent);
 
+    /// <summary>
+    /// Nach dem Reset: 0 % und – bei bekannter Fensterlänge – der nächste Reset.
+    /// Liefert true, wenn sich etwas geändert hat.
+    /// </summary>
+    public bool RollOver(DateTimeOffset now)
+    {
+        if (ResetsAt is not { } resetsAt || resetsAt > now) return false;
+        Percent = 0;
+        if (WindowLength is { } length && length > 0)
+        {
+            var periods = Math.Floor((now - resetsAt).TotalSeconds / length) + 1;
+            ResetsAt = resetsAt.AddSeconds(periods * length);
+        }
+        else
+        {
+            ResetsAt = null;
+        }
+        return true;
+    }
+
     /// <summary>Anteil der verstrichenen Fensterzeit, für die Pace-Marke.</summary>
     public double? ElapsedFraction(DateTimeOffset now)
     {

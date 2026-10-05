@@ -49,9 +49,18 @@ $env:TOKENSTATS_SCREENSHOTS = "$PWD\screenshots"; dotnet run --project TokenStat
 | Popup             | `NSPopover`                                            | rahmenloses Fenster über der Taskleiste, schließt bei Fokusverlust oder `Esc`                                     |
 | Einstellungen     | `⌘,`                                                   | `Strg+,` bei offenem Popup, Rechtsklick, Zahnrad                                                                 |
 | Claude-Zugang     | Schlüsselbund, Datei als Fallback                      | nur `%USERPROFILE%\.claude\.credentials.json` – Claude Code nutzt unter Windows keinen Credential Store          |
+| Antigravity-Zugang | Schlüsselbund `gemini` / `antigravity`                | Anmeldeinformationsverwaltung, generisch `gemini:antigravity` (reines JSON statt `go-keyring-base64:`)           |
+| Ollama-Signatur   | CryptoKit                                              | `BouncyCastle.Cryptography` – .NET bringt kein Ed25519 mit                                                      |
 | Daten der App     | `~/Library/Application Support/TokenStats/`            | `%LOCALAPPDATA%\TokenStats\` (`settings.json`, `state.json`, `usage.sqlite`)                                    |
 | Autostart         | `SMAppService`                                         | Wert `TokenStats` unter `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`                                    |
 | Updates           | Sparkle                                                | keine automatischen Updates                                                                                     |
+
+Wie aktuell die Limits je Anbieter sind und was dafür laufen muss, steht in der
+[Haupt-README](../README.md#wie-aktuell-sind-die-zahlen) – unter Windows gilt dasselbe.
+
+Jeder Push auf `windows/` baut und testet die App auf GitHub Actions
+(`.github/workflows/windows.yml`); die EXE-Dateien für ARM64 und x64 hängen als
+Artefakte am Lauf.
 
 Unverändert gelten die harten Regeln aus [CLAUDE.md](../CLAUDE.md): Abfrage höchstens
 alle 300 s, Zugangsdaten nur lesen, „API-Vergleichswert“ statt „Kosten“, Cache immer
@@ -66,7 +75,7 @@ Ein Ordner je Schicht, wie in `Sources/TokenStats/`:
 
 | Pfad                   | Inhalt                                                                      |
 | ---------------------- | --------------------------------------------------------------------------- |
-| `TokenStats/Providers` | Claude und Codex: Zugangsdaten lesen, Endpunkt abfragen, Antwort übersetzen |
+| `TokenStats/Providers` | Antigravity, Claude, Codex, Ollama: Zugangsdaten lesen, Endpunkt abfragen, Antwort übersetzen |
 | `TokenStats/Model`     | Stand je Anbieter, Abruftakt, Rate-Limit-Behandlung, Einstellungen, Formate |
 | `TokenStats/Usage`     | Log-Parser, SQLite-Aggregat, Preistabelle                                   |
 | `TokenStats/UI`        | Tray-Symbol, Popup, Seite „Verbrauch“, Einstellungen                        |
@@ -74,5 +83,5 @@ Ein Ordner je Schicht, wie in `Sources/TokenStats/`:
 | `TokenStats.Tests`     | die Swift-Tests aus `Tests/TokenStatsTests`, portiert, plus ein Ledger-Test |
 
 WPF mit .NET 10; das Symbol im Infobereich und sein Kontextmenü kommen aus WinForms,
-SQLite aus `Microsoft.Data.Sqlite`. Das Popup wird bei jeder Änderung komplett neu
+SQLite aus `Microsoft.Data.Sqlite`, Ed25519 für Ollama aus `BouncyCastle.Cryptography`. Das Popup wird bei jeder Änderung komplett neu
 aufgebaut – das hält den Code nah an den SwiftUI-Views.

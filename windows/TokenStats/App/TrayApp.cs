@@ -34,7 +34,7 @@ public sealed class TrayApp : IDisposable
     public TrayApp(bool demo = false)
     {
         Settings = new AppSettings(demo ? null : Path.Combine(DataDirectory, "settings.json"));
-        Store = new UsageStore([new ClaudeProvider(), new CodexProvider()], Settings,
+        Store = new UsageStore([new ClaudeProvider(), new CodexProvider(), new AntigravityProvider(), new OllamaProvider()], Settings,
                                demo ? null : Path.Combine(DataDirectory, "state.json"));
         Consumption = new ConsumptionStore(Settings, demo ? null : UsageLedger.DefaultPath);
         popup = new PopupWindow(Store, Consumption, Settings, OpenSettings);

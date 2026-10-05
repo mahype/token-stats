@@ -61,7 +61,9 @@ public sealed class PopupView
     {
         var p = Palette;
         var providers = store.SortedProviders;
-        var selected = providers.FirstOrDefault(provider => provider.Id == selectedId) ?? providers.FirstOrDefault();
+        // Beim Öffnen ist der knappste Anbieter aktiv, die Tab-Reihenfolge bleibt fest.
+        var activeId = selectedId ?? store.Tightest?.ProviderId;
+        var selected = providers.FirstOrDefault(provider => provider.Id == activeId) ?? providers.FirstOrDefault();
 
         var root = new StackPanel { Width = Width };
         root.Children.Add(Header());
@@ -165,7 +167,9 @@ public sealed class PopupView
     UIElement EmptyState()
     {
         var p = Palette;
-        var hint = Ui.Wrapped("Token Stats sucht nach Claude Code (%USERPROFILE%\\.claude) und Codex (%USERPROFILE%\\.codex).", 11, p.Secondary);
+        var hint = Ui.Wrapped("Token Stats sucht nach der Antigravity-CLI (%USERPROFILE%\\.gemini\\antigravity-cli), "
+                              + "Claude Code (%USERPROFILE%\\.claude), Codex (%USERPROFILE%\\.codex) und Ollama (%USERPROFILE%\\.ollama).",
+                              11, p.Secondary);
         hint.TextAlignment = TextAlignment.Center;
         var title = Ui.Text("Kein Anbieter gefunden", 12.5, p.Primary, FontWeights.SemiBold);
         title.HorizontalAlignment = HorizontalAlignment.Center;
@@ -319,19 +323,22 @@ public sealed class PopupView
         }
     }
 
-    /// <summary>Hinweis bei Rate-Limit oder Fehler – die letzten Werte bleiben darunter sichtbar.</summary>
+    /// <summary>Hinweis bei Rate-Limit, Fehler oder altem Stand – die letzten Werte bleiben darunter sichtbar.</summary>
     UIElement? StatusLine(UsageStore.ProviderState state)
     {
         var p = Palette;
         string glyph, text;
-        Severity severity;
+        Severity? severity;
         if (state.RetryAt is { } retryAt && state.IsRateLimited)
             (glyph, text, severity) = ("", $"Abfrage pausiert (Rate-Limit) · wieder ab {Format.Reset(retryAt, Now())}", Severity.Warn);
         else if (state.Error is { } error)
             (glyph, text, severity) = ("", state.Snapshot is null ? error : $"{error} Zeige letzten Stand.", Severity.Crit);
+        else if (state.Note is { } note)
+            (glyph, text, severity) = ("\uE917", state.Snapshot is { } snapshot ? $"{note} Abgefragt {Format.Ago(snapshot.FetchedAt, Now())}." : note, null);
         else
             return null;
-        var color = p.SeverityBrush(severity);
+        // Ein Hinweis ist kein Fehler: grau statt Warnfarbe.
+        var color = severity is { } level ? p.SeverityBrush(level) : p.Secondary;
         var icon = Ui.Icon(glyph, 11, color);
         icon.VerticalAlignment = VerticalAlignment.Top;
         icon.Margin = new Thickness(0, 2, 0, 0);
@@ -361,6 +368,9 @@ public sealed class PopupView
         var top = Ui.Spread(name, Ui.Text(Format.Percent(window.Percent), 12.5, color, FontWeights.Bold), VerticalAlignment.Bottom);
 
         var bar = new MeterBar(window.Percent, elapsed, color, p.Fill, p.Primary);
+
+        // Ollama nennt keine Reset-Zeiten – dann bleibt die Zeile weg statt leer.
+        if (window.ResetsAt is null && elapsed is null) return Ui.Column(4, top, bar);
 
         UIElement reset = window.ResetsAt is { } resetsAt ? Ui.Text($"Reset {Format.Reset(resetsAt, now)}", 11, p.Secondary) : new Border();
         UIElement? pace = null;

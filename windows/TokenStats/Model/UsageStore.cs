@@ -14,6 +14,9 @@ public sealed class UsageStore
     {
         public ProviderSnapshot? Snapshot { get; set; }
         public string? Error { get; set; }
+        /// <summary>Hinweis ohne Fehlercharakter, z. B. „Stand der letzten »agy«-Sitzung“.</summary>
+        public string? Note { get; set; }
+        /// <summary>Letzte Anfrage, die tatsächlich an den Endpunkt ging – Basis für den Takt.</summary>
         public DateTimeOffset? LastAttempt { get; set; }
         /// <summary>Bis hierhin keine Abfrage – aus Retry-After nach HTTP 429.</summary>
         public DateTimeOffset? RetryAt { get; set; }
@@ -48,9 +51,9 @@ public sealed class UsageStore
 
     public IEnumerable<IUsageProvider> InstalledProviders => Providers.Where(p => p.IsInstalled());
 
-    /// <summary>Nach Dringlichkeit sortiert: knappster Anbieter zuerst (SPEC §3.2). OrderBy ist stabil.</summary>
+    /// <summary>Alphabetisch nach Namen, damit die Tabs nicht springen (SPEC §3.2).</summary>
     public List<IUsageProvider> SortedProviders =>
-        InstalledProviders.OrderByDescending(p => State(p.Id).Snapshot?.TightestWindow?.Percent ?? -1).ToList();
+        InstalledProviders.OrderBy(p => p.DisplayName, StringComparer.Create(Format.Culture, ignoreCase: true)).ToList();
 
     /// <summary>Wert für Tray-Symbol und Tooltip.</summary>
     public Pick? Displayed => (settings.FixedWindow is { } key ? PickFor(key) : null) ?? Tightest;
@@ -85,6 +88,7 @@ public sealed class UsageStore
     public void Refresh(bool manual)
     {
         var now = DateTimeOffset.UtcNow;
+        RollOverResets(now);
         foreach (var provider in InstalledProviders.Where(p => !Loading.Contains(p.Id)))
         {
             var state = State(provider.Id);
@@ -100,18 +104,32 @@ public sealed class UsageStore
         var state = State(provider.Id);
         States[provider.Id] = state;
         Loading.Add(provider.Id);
+        var previousAttempt = state.LastAttempt;
         state.LastAttempt = DateTimeOffset.UtcNow;
         Changed?.Invoke();
         try
         {
             state.Snapshot = await provider.FetchAsync();
             state.Error = null;
+            state.Note = null;
             state.RetryAt = null;
         }
         catch (ProviderException error)
         {
             // Letzte Werte bleiben stehen, nie eine leere Anzeige.
-            state.Error = error.Message;
+            if (error.Kind == ProviderErrorKind.WaitingForToken)
+            {
+                state.Note = error.Message;
+                state.Error = null;
+            }
+            else
+            {
+                state.Error = error.Message;
+                state.Note = null;
+            }
+            // Ohne Anfrage kein Grund zu warten: Beim nächsten Timer-Tick werden die
+            // Zugangsdaten neu gelesen, damit ein von der CLI erneuertes Token sofort greift.
+            if (error.IsLocal) state.LastAttempt = previousAttempt;
             if (error.Kind == ProviderErrorKind.RateLimited)
                 state.RetryAt = DateTimeOffset.UtcNow + (error.RetryAfter ?? TimeSpan.FromSeconds(settings.RefreshInterval));
         }
@@ -122,6 +140,19 @@ public sealed class UsageStore
         Loading.Remove(provider.Id);
         SaveCache();
         Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// Ein Fenster, dessen Reset vorbei ist, steht ohne neue Abfrage auf 0 %. Wichtig für
+    /// Anbieter, die nur selten abgefragt werden können (Antigravity), aber auch bei Rate-Limit.
+    /// </summary>
+    void RollOverResets(DateTimeOffset now)
+    {
+        var changed = false;
+        foreach (var state in States.Values)
+            foreach (var window in state.Snapshot?.Windows ?? [])
+                changed |= window.RollOver(now);
+        if (changed) Changed?.Invoke();
     }
 
     /// <summary>Nur für Screenshots: fester Stand, ohne Abruf und ohne den Cache zu überschreiben.</summary>
