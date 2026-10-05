@@ -81,6 +81,8 @@ import Testing
         #expect(bundled.asOf != nil)
         #expect(bundled.price(for: "claude-opus-5-5") != nil)
         #expect(bundled.price(for: "claude-fable-5-1") != nil)
+        #expect(bundled.price(for: "gpt-6-sol") != nil)
+        #expect(bundled.price(for: "gpt-6.1-sol") != nil)
     }
 
     @Test func displayNames() {

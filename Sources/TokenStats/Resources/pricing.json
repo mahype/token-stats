@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-09-28",
+  "asOf": "2026-10-05",
   "source": "LiteLLM model_prices_and_context_window.json",
   "models": {
     "claude-haiku-4-5-20251001": {
@@ -31,6 +31,13 @@
       "cacheWrite1h": 0.000006
     },
     "claude-sonnet-5": {
+      "input": 0.000002,
+      "output": 0.00001,
+      "cacheRead": 2E-7,
+      "cacheWrite5m": 0.0000025,
+      "cacheWrite1h": 0.000004
+    },
+    "claude-sonnet-5-5": {
       "input": 0.000002,
       "output": 0.00001,
       "cacheRead": 2E-7,
@@ -218,6 +225,27 @@
       "cacheRead": 0.000021,
       "cacheWrite5m": 0.000021,
       "cacheWrite1h": 0.000021
+    },
+    "gpt-6-astra": {
+      "input": 0.00001,
+      "output": 0.00005,
+      "cacheRead": 0.000001,
+      "cacheWrite5m": 0.0000125,
+      "cacheWrite1h": 0.00001
+    },
+    "gpt-6-sol": {
+      "input": 0.000002,
+      "output": 0.00001,
+      "cacheRead": 2E-7,
+      "cacheWrite5m": 0.0000025,
+      "cacheWrite1h": 0.000002
+    },
+    "gpt-6-luna": {
+      "input": 1E-7,
+      "output": 5E-7,
+      "cacheRead": 1E-8,
+      "cacheWrite5m": 1.25E-7,
+      "cacheWrite1h": 1E-7
     },
     "gpt-5.6": {
       "input": 0.000004,
@@ -526,6 +554,13 @@
       "cacheRead": 0.00000125,
       "cacheWrite5m": 0.0000125,
       "cacheWrite1h": 0.0000125
+    },
+    "gpt-6.1-sol": {
+      "input": 0.000002,
+      "output": 0.00001,
+      "cacheRead": 1E-7,
+      "cacheWrite5m": 0.0000025,
+      "cacheWrite1h": 0.000002
     }
   }
 }

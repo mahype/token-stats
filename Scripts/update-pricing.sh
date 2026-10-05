@@ -12,7 +12,7 @@ curl -sfL "$URL" | jq --arg date "$(date +%F)" '
     models: (to_entries
       | map(select(
           (.value.litellm_provider == "anthropic" and (.key | test("^claude-")))
-          or (.value.litellm_provider == "openai" and (.key | test("^(gpt-5|o[34]|codex)")))
+          or (.value.litellm_provider == "openai" and (.key | test("^(gpt-[5-9]|o[34]|codex)")))
         ))
       | map(select(.value.input_cost_per_token != null and .value.output_cost_per_token != null))
       | map({

@@ -9,6 +9,8 @@ das GitHub-Release und für den Update-Dialog in der App.
   Token jetzt innerhalb von 30 s statt erst nach dem nächsten Abfrageintervall. Der
   Hinweis sagt genauer, was zu tun ist: Die Claude-Desktop-App erneuert das Token der
   CLI nicht, dafür muss `claude` einmal im Terminal laufen.
+- **Preistabelle:** API-Vergleichswerte jetzt auch für GPT-6 (Sol, 6.1 Sol, Luna, Astra)
+  und Claude Sonnet 5.5. Stand 05.10.2026.
 
 ## 0.2.0
 
