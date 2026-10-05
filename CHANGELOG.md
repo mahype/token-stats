@@ -3,7 +3,7 @@
 Jede Version hat einen Abschnitt `## X.Y.Z`. `make publish` übernimmt ihn als Text für
 das GitHub-Release und für den Update-Dialog in der App.
 
-## Unveröffentlicht
+## 0.3.0
 
 - **Antigravity (Google):** Neuer Anbieter mit den Wochenlimits für Gemini und für
   Claude & GPT sowie dem Plan (z. B. „Google AI Plus“). Voraussetzung ist die
