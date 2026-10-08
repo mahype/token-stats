@@ -15,6 +15,7 @@ struct ClaudeProvider: UsageProvider {
     static let usageURL = URL(string: "https://api.anthropic.com/api/oauth/usage")!
     static let keychainService = "Claude Code-credentials"
     static let hint = "»claude« im Terminal einmal starten – die Desktop-App erneuert dieses Token nicht."
+    static let loginHint = "»claude auth login« im Terminal ausführen. Die Desktop-App hat eine eigene Anmeldung."
 
     private var home: URL { FileManager.default.homeDirectoryForCurrentUser }
     private var credentialsFile: URL { home.appending(path: ".claude/.credentials.json") }
@@ -24,7 +25,12 @@ struct ClaudeProvider: UsageProvider {
     }
 
     func fetch() async throws -> ProviderSnapshot {
-        guard let credentials = loadCredentials() else { throw ProviderError.notLoggedIn(hint: Self.hint) }
+        let keychain = Keychain.password(service: Self.keychainService)
+        // Abgemeldet heißt abgemeldet: Die Datei ist dann nur ein veralteter Rest.
+        if let keychain, Self.isSignedOut(keychain) { throw ProviderError.notLoggedIn(hint: Self.loginHint) }
+        guard let credentials = loadCredentials(keychain: keychain) else {
+            throw ProviderError.notLoggedIn(hint: Self.loginHint)
+        }
         if let expiresAt = credentials.expiresAt, expiresAt < .now {
             throw ProviderError.tokenExpired(hint: Self.hint)
         }
@@ -51,11 +57,20 @@ struct ClaudeProvider: UsageProvider {
 
     /// Schlüsselbund und Datei lesen, die länger gültige Quelle gewinnt.
     /// Auf macOS ist der Schlüsselbund maßgeblich; die Datei kann veraltet sein.
-    private func loadCredentials() -> Credentials? {
-        let candidates = [Keychain.password(service: Self.keychainService), try? Data(contentsOf: credentialsFile)]
+    private func loadCredentials(keychain: Data?) -> Credentials? {
+        let candidates = [keychain, try? Data(contentsOf: credentialsFile)]
             .compactMap { $0 }
             .compactMap(Self.parseCredentials)
         return candidates.max { ($0.expiresAt ?? .distantPast) < ($1.expiresAt ?? .distantPast) }
+    }
+
+    /// Nach `/logout` oder gescheiterter Erneuerung lässt Claude Code den Eintrag stehen,
+    /// leert aber die Tokens (`accessToken` "", `expiresAt` 0).
+    static func isSignedOut(_ data: Data) -> Bool {
+        guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let oauth = root["claudeAiOauth"] as? [String: Any]
+        else { return false }
+        return (oauth["accessToken"] as? String ?? "").isEmpty
     }
 
     static func parseCredentials(_ data: Data) -> Credentials? {

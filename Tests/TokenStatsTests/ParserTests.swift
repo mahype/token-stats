@@ -29,6 +29,15 @@ import Testing
         #expect(snapshot.extras.map(\.text) == ["Extra 12,40 $ / 50,00 $"])
     }
 
+    @Test func recognizesSignedOutKeychainEntry() {
+        let signedOut = #"{"claudeAiOauth":{"accessToken":"","refreshToken":"","expiresAt":0,"subscriptionType":"max"},"mcpOAuth":{}}"#
+        let signedIn = #"{"claudeAiOauth":{"accessToken":"sk-ant-demo","expiresAt":1900000000000}}"#
+        #expect(ClaudeProvider.isSignedOut(Data(signedOut.utf8)))
+        #expect(!ClaudeProvider.isSignedOut(Data(signedIn.utf8)))
+        #expect(!ClaudeProvider.isSignedOut(Data(#"{"mcpOAuth":{}}"#.utf8)), "ohne Claude-Eintrag: Datei als Fallback")
+        #expect(ClaudeProvider.parseCredentials(Data(signedOut.utf8)) == nil)
+    }
+
     @Test func rejectsUnexpectedShape() {
         #expect(throws: ProviderError.badResponse) {
             try ClaudeProvider.parse(Data(#"{"error":{"message":"nope"}}"#.utf8))

@@ -18,7 +18,7 @@ settings:
     CODE_SIGN_STYLE: Manual
     DEVELOPMENT_TEAM: ""
     ENABLE_HARDENED_RUNTIME: YES
-    MARKETING_VERSION: "0.3.0"
+    MARKETING_VERSION: "0.3.1"
     # Sparkle vergleicht CFBundleVersion mit dem Appcast – darum identisch mit der Version.
     CURRENT_PROJECT_VERSION: "$(MARKETING_VERSION)"
 

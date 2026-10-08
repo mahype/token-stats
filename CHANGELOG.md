@@ -3,6 +3,14 @@
 Jede Version hat einen Abschnitt `## X.Y.Z`. `make publish` übernimmt ihn als Text für
 das GitHub-Release und für den Update-Dialog in der App.
 
+## 0.3.1
+
+- **Claude abgemeldet statt „abgelaufen“:** Hat sich die Claude-Code-CLI abgemeldet –
+  etwa nach `/logout` oder einer gescheiterten Token-Erneuerung –, sagt Token Stats das
+  jetzt so und nennt `claude auth login`. Bisher fiel die App auf eine veraltete
+  Zugangsdatei zurück und meldete nur „Anmeldung abgelaufen“. Die Claude-Desktop-App
+  hat eine eigene Anmeldung und bleibt davon unberührt.
+
 ## 0.3.0
 
 - **Antigravity (Google):** Neuer Anbieter mit den Wochenlimits für Gemini und für

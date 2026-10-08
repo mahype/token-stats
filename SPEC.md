@@ -268,6 +268,12 @@ Auf dem Zielrechner bereits vorhanden: `~/.claude`, `~/.codex`, `~/.gemini`,
   Server mit 401/403 antworten (nicht live geprüft), und die App zeigt „»ollama signin«
   ausführen“.
 
+- **Abgemeldete CLI** (beobachtet 07.10.2026, Claude Code 2.1.290): Nach `/logout` oder
+  gescheiterter Erneuerung bleibt der Schlüsselbund-Eintrag stehen, `accessToken` und
+  `refreshToken` sind aber leer, `expiresAt` ist 0. Dann gilt „nicht angemeldet“ mit
+  Hinweis auf `claude auth login` – die Datei `~/.claude/.credentials.json` ist in dem
+  Fall nur ein veralteter Rest und wird nicht als Ersatz gelesen.
+
 ### Aktualität je Anbieter (Stand 05.10.2026)
 
 Limits sind kontoweit (alle Geräte, Browser, Desktop-Apps), brauchen aber ein gültiges
