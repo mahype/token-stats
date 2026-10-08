@@ -5,6 +5,17 @@
     <link>https://mahype.github.io/token-stats/appcast.xml</link>
     <language>de</language>
     <item>
+      <title>Version 0.3.1</title>
+      <pubDate>Thu, 08 Oct 2026 12:39:16 GMT</pubDate>
+      <sparkle:version>0.3.1</sparkle:version>
+      <sparkle:shortVersionString>0.3.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description>&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Claude abgemeldet statt „abgelaufen“:&lt;/strong&gt; Hat sich die Claude-Code-CLI abgemeldet – etwa nach &lt;code&gt;/logout&lt;/code&gt; oder einer gescheiterten Token-Erneuerung –, sagt Token Stats das jetzt so und nennt &lt;code&gt;claude auth login&lt;/code&gt;. Bisher fiel die App auf eine veraltete Zugangsdatei zurück und meldete nur „Anmeldung abgelaufen“. Die Claude-Desktop-App hat eine eigene Anmeldung und bleibt davon unberührt.&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <enclosure url="https://github.com/mahype/token-stats/releases/download/v0.3.1/Token-Stats-0.3.1.dmg" length="2106208" type="application/octet-stream" sparkle:edSignature="5ItGIsTAD4rQqxcsXhzgCP4ANEP/tdlHs3+gPFNvaBDbk06MuZLaHqUuukQjr9LPWBWDFmQtO7Q5RkMaDB7NAA==" />
+    </item>
+    <item>
       <title>Version 0.3.0</title>
       <pubDate>Mon, 05 Oct 2026 11:52:36 GMT</pubDate>
       <sparkle:version>0.3.0</sparkle:version>
