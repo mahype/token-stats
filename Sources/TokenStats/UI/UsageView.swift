@@ -51,6 +51,7 @@ struct UsageView: View {
                     .buttonStyle(.plain)
                     .font(.system(size: 11.5, weight: option == period ? .bold : .regular))
                     .foregroundStyle(option == period ? .primary : .secondary)
+                    .fixedSize()
             }
             Spacer()
             if let summary = consumption.summary(providerID, period), !summary.total.isZero {
@@ -72,9 +73,15 @@ struct UsageView: View {
                 copied = false
             }
         } label: {
-            Label(copied ? "Kopiert" : "CSV", systemImage: copied ? "checkmark" : "doc.on.doc")
-                .font(.system(size: 10.5))
-                .foregroundStyle(.secondary)
+            // Beide Beschriftungen liegen übereinander, damit der Button beim Wechsel
+            // auf „Kopiert“ nicht breiter wird und die Zeitraum-Labels verschiebt.
+            ZStack(alignment: .trailing) {
+                Label("Kopiert", systemImage: "checkmark").opacity(copied ? 1 : 0)
+                Label("CSV", systemImage: "doc.on.doc").opacity(copied ? 0 : 1)
+            }
+            .font(.system(size: 10.5))
+            .foregroundStyle(.secondary)
+            .fixedSize()
         }
         .buttonStyle(.plain)
         .help("Verbrauch dieses Zeitraums als CSV kopieren")
