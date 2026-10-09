@@ -43,6 +43,9 @@ keine Cloud, keine Telemetrie.
   getrennt ausgewiesenem Cache-Anteil, Tagesdiagramm und Aufschlüsselung je Modell.
 - **API-Vergleichswert** aus Tokenzahl × Listenpreis, mit mitgelieferter Preistabelle.
   Abschaltbar, wenn du nur Tokens sehen willst.
+- **CSV kopieren:** Der angezeigte Zeitraum landet mit einem Klick als CSV in der
+  Zwischenablage – je Modell mit getrennten Cache-Spalten und je Tag, für Numbers, Excel
+  oder die Abrechnung.
 - **Schont die Rate-Limits:** höchstens alle 5 Minuten eine Abfrage, der letzte Stand
   überlebt Neustarts. Bei HTTP 429 bleiben die letzten Werte mit Pause-Symbol stehen –
   nie eine leere Anzeige.
