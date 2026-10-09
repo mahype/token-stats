@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Seite „Verbrauch“: Tokens und API-Vergleichswert je Zeitraum (SPEC §3.5).
@@ -8,6 +9,7 @@ struct UsageView: View {
     let subscription: Int?
 
     @State private var period: UsagePeriod = .week
+    @State private var copied = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -50,7 +52,33 @@ struct UsageView: View {
                     .font(.system(size: 11.5, weight: option == period ? .bold : .regular))
                     .foregroundStyle(option == period ? .primary : .secondary)
             }
+            Spacer()
+            if let summary = consumption.summary(providerID, period), !summary.total.isZero {
+                copyButton(summary)
+            }
         }
+    }
+
+    /// Kopiert den Zeitraum als CSV – je Modell und je Tag – in die Zwischenablage,
+    /// für Tabellenkalkulation oder Abrechnung.
+    private func copyButton(_ summary: UsageSummary) -> some View {
+        Button {
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(UsageCSV.render(summary, showMoney: showMoney), forType: .string)
+            copied = true
+            Task {
+                try? await Task.sleep(for: .seconds(1.5))
+                copied = false
+            }
+        } label: {
+            Label(copied ? "Kopiert" : "CSV", systemImage: copied ? "checkmark" : "doc.on.doc")
+                .font(.system(size: 10.5))
+                .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+        .help("Verbrauch dieses Zeitraums als CSV kopieren")
+        .accessibilityLabel("Verbrauch als CSV kopieren")
     }
 
     @ViewBuilder
