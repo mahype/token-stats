@@ -19,7 +19,7 @@ public sealed partial class ClaudeProvider : IUsageProvider
     public string DisplayName => "Claude";
 
     static readonly Uri UsageUrl = new("https://api.anthropic.com/api/oauth/usage");
-    const string Hint = "Claude Code einmal starten.";
+    const string Hint = "»claude« im Terminal einmal starten.";
 
     static string Home => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     static string CredentialsFile => Path.Combine(Home, ".claude", ".credentials.json");

@@ -18,6 +18,21 @@ public static class Http
     public static async Task<byte[]> GetJsonAsync(Uri url, IReadOnlyDictionary<string, string> headers, string expiredHint)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        return await SendAsync(request, headers, expiredHint);
+    }
+
+    /// <summary>POST mit JSON-Body – die Google-Endpunkte sind RPCs, auch wenn sie nur lesen.</summary>
+    public static async Task<byte[]> PostJsonAsync(Uri url, JsonNode body, IReadOnlyDictionary<string, string> headers, string expiredHint)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json"),
+        };
+        return await SendAsync(request, headers, expiredHint);
+    }
+
+    static async Task<byte[]> SendAsync(HttpRequestMessage request, IReadOnlyDictionary<string, string> headers, string expiredHint)
+    {
         request.Headers.TryAddWithoutValidation("Accept", "application/json");
         foreach (var (key, value) in headers) request.Headers.TryAddWithoutValidation(key, value);
 
@@ -37,7 +52,7 @@ public static class Http
                 case HttpStatusCode.OK:
                     return await response.Content.ReadAsByteArrayAsync();
                 case HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden:
-                    throw ProviderException.TokenExpired(expiredHint);
+                    throw ProviderException.Unauthorized(expiredHint);
                 case HttpStatusCode.TooManyRequests:
                     var header = response.Headers.TryGetValues("Retry-After", out var values) ? values.FirstOrDefault() : null;
                     throw ProviderException.RateLimited(RetryAfter(header, DateTimeOffset.UtcNow));

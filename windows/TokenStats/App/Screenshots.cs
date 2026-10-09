@@ -23,7 +23,8 @@ static class Screenshots
         Directory.CreateDirectory(directory);
         var now = DateTimeOffset.Now;
         var settings = new AppSettings();
-        var store = new UsageStore([new ClaudeProvider(), new CodexProvider()], settings, cachePath: null);
+        var store = new UsageStore([new ClaudeProvider(), new CodexProvider(), new AntigravityProvider(), new OllamaProvider()],
+                                   settings, cachePath: null);
         var consumption = new ConsumptionStore(settings, ledgerPath: null);
         store.ShowDemo(DemoSnapshots(now));
         consumption.ShowDemo(DemoUsage(now, settings.BillingDay, consumption.Prices));
@@ -37,6 +38,10 @@ static class Screenshots
             Save(Card(view.Build(), view.Palette), File("limits"));
             view.Reset("codex");
             Save(Card(view.Build(), view.Palette), File("limits-codex"));
+            view.Reset("antigravity");
+            Save(Card(view.Build(), view.Palette), File("limits-antigravity"));
+            view.Reset("ollama");
+            Save(Card(view.Build(), view.Palette), File("limits-ollama"));
             view.Reset("claude", PopupPage.Usage);
             Save(Card(view.Build(), view.Palette), File("usage"));
             Save(Tray(DemoSnapshots(now)["claude"].Windows, dark), File("tray"));
@@ -179,6 +184,27 @@ static class Screenshots
                     new() { Id = "review", Name = "Code-Review", ScopeNote = "7 d", Percent = 0.08, ResetsAt = now.AddSeconds(4.1 * 24 * hour), WindowLength = week },
                 ],
                 Extras = [new ExtraValue("credits", "Credits unbegrenzt")],
+                FetchedAt = now.AddSeconds(-60),
+            },
+            ["antigravity"] = new ProviderSnapshot
+            {
+                Account = new AccountInfo("Demo", "Google AI Plus"),
+                Windows =
+                [
+                    new() { Id = "gemini-weekly", Name = "Gemini", ScopeNote = "Wochenlimit", Percent = 0.35, ResetsAt = now.AddSeconds(5.3 * 24 * hour), WindowLength = week },
+                    new() { Id = "3p-weekly", Name = "Claude & GPT", ScopeNote = "Wochenlimit", Percent = 0.12, ResetsAt = now.AddSeconds(5.3 * 24 * hour), WindowLength = week },
+                ],
+                FetchedAt = now.AddSeconds(-60),
+            },
+            ["ollama"] = new ProviderSnapshot
+            {
+                Account = new AccountInfo("Demo", "Pro"),
+                Windows =
+                [
+                    new() { Id = "session", Name = "Session", ScopeNote = "5 h", Percent = 0.18 },
+                    new() { Id = "weekly", Name = "Woche", ScopeNote = "7 d", Percent = 0.41 },
+                ],
+                Extras = [new ExtraValue("requests-glm-5.3", "glm-5.3 · 312 Anfragen"), new ExtraValue("requests-kimi-k2.6", "kimi-k2.6 · 48 Anfragen")],
                 FetchedAt = now.AddSeconds(-60),
             },
         };

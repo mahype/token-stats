@@ -1,0 +1,46 @@
+# Baut und testet die Windows-Fassung – auf dem Mac gibt es kein .NET (windows/README.md).
+# Die EXE-Dateien landen als Artefakte am Lauf, damit sich ein Stand ohne eigenen Build testen lässt.
+name: Windows
+
+on:
+  push:
+    branches: [main]
+    paths: ['windows/**', 'Sources/TokenStats/Resources/pricing.json', '.github/workflows/windows.yml']
+  pull_request:
+    paths: ['windows/**', 'Sources/TokenStats/Resources/pricing.json', '.github/workflows/windows.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet test TokenStats.Windows.slnx --configuration Release
+
+  publish:
+    needs: test
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        runtime: [win-arm64, win-x64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: .\windows\publish.ps1 -Runtime ${{ matrix.runtime }}
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TokenStats-${{ matrix.runtime }}
+          path: build/windows/${{ matrix.runtime }}/TokenStats.exe
+          retention-days: 14

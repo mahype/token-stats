@@ -13,6 +13,9 @@ sealed class UsageView(
 {
     public UIElement Build()
     {
+        if (!ConsumptionStore.ProviderIds.Contains(providerId))
+            return Placeholder("Für diesen Anbieter gibt es noch keine Verbrauchsauswertung.");
+
         var column = Ui.Column(14, PeriodPicker());
         if (consumption.Summary(providerId, period) is { } summary)
         {
@@ -81,7 +84,7 @@ sealed class UsageView(
 
     string Footnote(UsageSummary summary)
     {
-        var text = "Lokale Tokenzahlen aus den Session-Logs";
+        var text = "Tokenzahlen aus den Session-Logs dieses Rechners – Nutzung auf anderen Geräten fehlt";
         if (!showMoney) return text + ".";
         var asOf = consumption.Prices.AsOf is { } date ? $" (Stand {date.ToString("MM/yyyy", Format.Culture)})" : "";
         text += $" × Listenpreis{asOf}, inkl. Cache-Tarife. Keine Abrechnungsdaten – nur, was derselbe Verbrauch über die API gekostet hätte.";
