@@ -282,6 +282,14 @@ Antigravity 1 h, Ollama unbegrenzt (Schlüssel statt Token, Ollama muss nicht la
 Der Verbrauch kommt aus den lokalen Logs und enthält nur diesen Mac – die Fußnote der
 Seite sagt das ausdrücklich. Übersicht für Nutzer: README „Wie aktuell sind die Zahlen?“.
 
+### Gestaffelte Preise (Stand 09.10.2026)
+
+Claude Haiku 5.5 kostet bei Anfragen über 100.000 Tokens (inkl. Cache-Reads und
+-Writes) das Fünffache. Das Aggregat zählt je Tag und Modell und kennt einzelne
+Anfragen nicht mehr; die Preistabelle führt darum den Preis bis 100.000 Tokens, und
+der API-Vergleichswert fällt bei langen Anfragen zu niedrig aus. Genauer ginge es nur,
+wenn der Parser Anfragen über der Schwelle als eigenes Pseudo-Modell zählt.
+
 ### Verbrauch aus den Logs (verifiziert 28.09.2026)
 
 - **Claude:** Jede Antwort steht mehrfach im Log (eine Zeile je Inhaltsblock), und die

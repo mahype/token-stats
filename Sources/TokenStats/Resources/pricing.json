@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-10-05",
+  "asOf": "2026-10-09",
   "source": "LiteLLM model_prices_and_context_window.json",
   "models": {
     "claude-haiku-4-5-20251001": {
@@ -40,7 +40,7 @@
     "claude-sonnet-5-5": {
       "input": 0.000002,
       "output": 0.00001,
-      "cacheRead": 2E-7,
+      "cacheRead": 1E-7,
       "cacheWrite5m": 0.0000025,
       "cacheWrite1h": 0.000004
     },
@@ -561,6 +561,13 @@
       "cacheRead": 1E-7,
       "cacheWrite5m": 0.0000025,
       "cacheWrite1h": 0.000002
+    },
+    "claude-haiku-5-5": {
+      "input": 1E-7,
+      "output": 5E-7,
+      "cacheRead": 1E-8,
+      "cacheWrite5m": 1.25E-7,
+      "cacheWrite1h": 2E-7
     }
   }
 }

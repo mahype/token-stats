@@ -83,6 +83,7 @@ import Testing
         #expect(bundled.price(for: "claude-fable-5-1") != nil)
         #expect(bundled.price(for: "gpt-6-sol") != nil)
         #expect(bundled.price(for: "gpt-6.1-sol") != nil)
+        #expect(abs((bundled.price(for: "claude-haiku-5-5")?.input ?? 0) * 1_000_000 - 0.1) < 1e-9)
     }
 
     @Test func displayNames() {

@@ -3,6 +3,13 @@
 Jede Version hat einen Abschnitt `## X.Y.Z`. `make publish` übernimmt ihn als Text für
 das GitHub-Release und für den Update-Dialog in der App.
 
+## Unveröffentlicht
+
+- **Preistabelle:** Claude Haiku 5.5 ist neu. Bei Claude Sonnet 5.5 kosten Cache-Treffer
+  jetzt 0,10 $ statt 0,20 $ pro Million Tokens. Alle übrigen Preise sind mit den
+  offiziellen Preisseiten abgeglichen, Stand 09.10.2026. Haiku 5.5 wird bei Anfragen
+  über 100.000 Tokens teurer; der API-Vergleichswert rechnet mit dem Preis darunter.
+
 ## 0.3.1
 
 - **Claude abgemeldet statt „abgelaufen“:** Hat sich die Claude-Code-CLI abgemeldet –
