@@ -172,6 +172,11 @@ auch wenn `xcode-select` auf die Command Line Tools zeigt.
 Eine Portierung als Tray-App für Windows 10/11 (nativ ARM64, auch x64) liegt in
 [`windows/`](windows/README.md) – gleiche Datenquellen und Rechnung, gebaut mit .NET 10.
 
+### Linux
+
+Ein Tray-Widget für Linux (Python/GTK3, getestet unter KDE Plasma/Wayland, nur Claude Code)
+liegt in [`linux/`](linux/README.md) – gleiche Datenquellen, Rechnung und Preistabelle.
+
 ## Entfernen
 
 **Bei Anmeldung starten** ausschalten, die App beenden, dann:
