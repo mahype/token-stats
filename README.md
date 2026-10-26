@@ -48,6 +48,14 @@ keine Cloud, keine Telemetrie.
   nie eine leere Anzeige.
 - Rechtsklick aufs Symbol: Aktualisieren, Anzeige-Modus, Bei Anmeldung starten,
   Einstellungen (auch mit `⌘,` bei offenem Popover).
+- **Widgets** für Schreibtisch und Mitteilungszentrale: „Verbrauch“ mit Tokens,
+  API-Vergleichswert, Tagesdiagramm und Modellen für Heute, 7 Tage, 30 Tage oder den
+  Abrechnungsmonat – und „Limits“ mit den Metern eines Anbieters samt Pace-Marke. Klick
+  aufs Widget öffnet das Popover auf der passenden Seite.
+- **iPhone und iPad** (optional): Die Mac-App überträgt ihren Stand auf Wunsch in deine
+  private iCloud-Datenbank, die iOS-App zeigt Limits und Verbrauch aller Macs – dazu
+  Widgets für Homescreen und Sperrbildschirm. Standardmäßig aus, siehe
+  [iPhone](#iphone-und-ipad).
 
 <table>
   <tr>
@@ -99,6 +107,29 @@ Die drei Anzeige-Modi der Menüleiste:
     <img src="screenshots/menubar-light.png" width="270" alt="Menüleisten-Symbol: nur Icon, Icon mit Prozent, Icon mit Balken">
   </picture>
 </p>
+
+Die Widgets „Verbrauch“ und „Limits“ in Klein, Mittel und Groß (Zeitraum und Anbieter
+sind je Widget einstellbar):
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="screenshots/widgets-dark.png">
+    <img src="screenshots/widgets-light.png" width="560" alt="Widgets: Verbrauch heute und 7 Tage, Limits von Claude, Verbrauch 30 Tage mit Modellen">
+  </picture>
+</p>
+
+Die iOS-App mit dem Stand eines Macs (Simulator, Demo-Werte):
+
+<table>
+  <tr>
+    <th width="50%">Limits</th>
+    <th width="50%">Verbrauch</th>
+  </tr>
+  <tr>
+    <td valign="top" align="center"><img src="screenshots/ios-limits.png" width="300" alt="iOS-App, Tab „Limits“: ein Abschnitt je Mac mit den Metern aller Anbieter"></td>
+    <td valign="top" align="center"><img src="screenshots/ios-usage.png" width="300" alt="iOS-App, Tab „Verbrauch“: Zeitraum, Anbieter, Kennzahlen, Tagesdiagramm und Modelle"></td>
+  </tr>
+</table>
 
 Die Einstellungen – Anzeige, Stichtag des Abos und Abfrageintervall:
 
@@ -169,6 +200,28 @@ auch wenn `xcode-select` auf die Command Line Tools zeigt.
 Eine Portierung als Tray-App für Windows 10/11 (nativ ARM64, auch x64) liegt in
 [`windows/`](windows/README.md) – gleiche Datenquellen und Rechnung, gebaut mit .NET 10.
 
+## iPhone und iPad
+
+Das iPhone kann die Anbieter nicht selbst abfragen und keine Logs lesen – es zeigt den
+Stand deiner Macs. Dafür schreibt die Mac-App, wenn du es einschaltest, nach jeder
+Abfrage einen Datensatz je Mac in deine **private iCloud-Datenbank** (CloudKit): Prozente,
+Reset-Zeiten, Tagessummen und Beträge, dieselben Kilobyte wie für die Widgets. Keine
+Zugangsdaten, keine Logs. Die iOS-App holt die Datensätze, zeigt sie als Abschnitt je Mac
+(plus „Alle Macs“ zusammengerechnet) und lädt per stillem Push nach, sobald ein Mac
+einen neuen Stand schreibt; daneben steht immer, wie alt der Stand ist, weil ein Mac
+zwischendurch schlafen kann.
+
+- Einschalten: Mac → Einstellungen → **iPhone → „Stand nach iCloud übertragen“**. Standard
+  ist aus; ohne iPhone bleibt es bei „keine Cloud“.
+- Die Mac-App braucht dafür einen Build mit iCloud-Berechtigung (`make build ICLOUD=1`,
+  verlangt ein Provisioning-Profil – siehe [Entwicklung](#entwicklung)). Ohne sie ist der
+  Schalter ausgegraut.
+- Die iOS-App kommt nur über TestFlight oder den App Store aufs Gerät; ein Build aus
+  Xcode mit eigenem Team geht für das eigene iPhone.
+- Widgets auf iOS: Homescreen klein, mittel, groß wie auf dem Mac; Sperrbildschirm rund
+  (Gauge des knappsten Limits), rechteckig (Session und Woche mit Reset) und inline
+  („Claude 62 % · Reset 14:30“). Anbieter und Zeitraum je Widget einstellbar.
+
 ## Entfernen
 
 **Bei Anmeldung starten** ausschalten, die App beenden, dann:
@@ -211,6 +264,8 @@ im Browser oder in einer Desktop-App verbrauchst, fehlt dort.
 | Tokenzahlen (nur lesen) | `~/.claude/projects/**/*.jsonl`, Session-Logs unter `~/.codex/` |
 | Letzter Stand der Limits | `~/Library/Application Support/TokenStats/state.json` (nur Prozente und Reset-Zeiten) |
 | Verbrauchs-Aggregat je Tag und Modell | `~/Library/Application Support/TokenStats/usage.sqlite` |
+| Stand für die Widgets | `~/Library/Group Containers/<Team-ID>.de.mahype.TokenStats/widgets.json` – Prozente, Reset-Zeiten, Tagessummen und Beträge, fertig gerechnet; keine Zugangsdaten |
+| Stand fürs iPhone (nur wenn eingeschaltet) | private CloudKit-Datenbank `iCloud.de.mahype.TokenStats`, ein Datensatz je Mac mit demselben Inhalt wie `widgets.json` |
 | Einstellungen | UserDefaults `de.mahype.TokenStats` |
 | Claude-Kontingent | `api.anthropic.com/api/oauth/usage` |
 | Codex-Kontingent | `chatgpt.com/backend-api/wham/usage` |
@@ -225,7 +280,8 @@ im Browser oder in einer Desktop-App verbrauchst, fehlt dort.
   [Wie aktuell sind die Zahlen?](#wie-aktuell-sind-die-zahlen)
 - **Nur die Anbieter-Endpunkte** werden kontaktiert, dazu einmal täglich der Update-Feed –
   ohne Systemdaten, abschaltbar unter Einstellungen → Updates. Preise stammen aus der
-  mitgelieferten Tabelle, nicht aus dem Netz.
+  mitgelieferten Tabelle, nicht aus dem Netz. iCloud nur, wenn du „Stand nach iCloud
+  übertragen“ einschaltest.
 - **Abfrageintervall mindestens 300 s.** Die Usage-Endpunkte sind undokumentiert und
   hart rate-limitiert.
 
@@ -251,10 +307,19 @@ Gesamt-Tokenzahl würde in die Irre führen.
 | `make release` | Universal-Build als DMG nach `build/`: signiert, notarisiert, gestapelt |
 | `make publish` | Tag, GitHub-Release und Eintrag im Update-Feed für dieses DMG |
 | `make screenshots` | die Bilder dieser README nach `screenshots/` rendern (außer Einstellungen, siehe [CLAUDE.md](CLAUDE.md)) |
+| `make ios` · `make ios-run` | iOS-App für den Simulator bauen bzw. dort mit Demo-Werten starten (`SIMULATOR="iPhone 16"` wählt das Gerät) |
+| `make build ICLOUD=1` · `make release ICLOUD=1` | Mac-App mit iCloud-Berechtigung (verlangt ein Provisioning-Profil mit iCloud; für Developer ID `PROVISIONING_PROFILE_SPECIFIER` mitgeben) |
+| `swift build` in `Packages/TokenStatsCore` | nur den gemeinsamen Kern bauen |
 | `Scripts/update-pricing.sh` | Preistabelle aus LiteLLM aktualisieren |
 
 `TokenStats.xcodeproj` ist nicht eingecheckt, XcodeGen erzeugt es bei jedem Build.
 `usage.sqlite` löschen erzwingt ein komplettes Neueinlesen der Logs.
+
+Debug-Builds signiert `make build` mit einem „Apple Development“-Zertifikat aus dem
+Schlüsselbund, falls eines da ist, sonst ad hoc. Die Widgets brauchen die Team-Signatur:
+Die App Group heißt `<Team-ID>.de.mahype.TokenStats`, und macOS lässt nur Apps desselben
+Teams an den Container. Ad hoc signiert läuft die App, die Widgets zeigen dann aber nur
+„Token Stats öffnen“.
 
 | Pfad | Inhalt |
 |---|---|
@@ -262,6 +327,9 @@ Gesamt-Tokenzahl würde in die Irre führen.
 | `Sources/TokenStats/Model/` | Stand je Anbieter, Abruftakt, Rate-Limit-Behandlung, Einstellungen |
 | `Sources/TokenStats/Usage/` | Log-Parser, SQLite-Aggregat, Preistabelle |
 | `Sources/TokenStats/UI/` | Popover, Verbrauchsseite, Einstellungen, Menüleisten-Symbol |
+| `Sources/TokenStatsWidgets/` | WidgetKit-Erweiterung für Mac und iOS: Konfiguration und Timelines der Widgets „Verbrauch“ und „Limits“, Sperrbildschirm-Familien |
+| `Sources/TokenStatsiOS/` | iOS-App: iCloud-Stand laden, Tabs „Limits“ und „Verbrauch“ |
+| `Packages/TokenStatsCore/` | gemeinsamer Kern von App und Widgets: Datenmodell, Formate, Preistabelle, Zustandsfarben, Widget-Views, Demo-Werte |
 | `Tests/TokenStatsTests/` | Parser- und Verbrauchstests |
 
 Das vollständige Design mit den Begründungen hinter den Entscheidungen steht in
@@ -272,8 +340,8 @@ Das vollständige Design mit den Begründungen hinter den Entscheidungen steht i
 - [x] **v1** – Limits für Claude und Codex, drei Anzeige-Modi, Rate-Limit-Behandlung
 - [ ] **v2** – Verbrauchsseite mit API-Vergleichswert ✅ · Mitteilungen bei 50/80/90 %
   und bei Reset
-- [ ] **v3** – Antigravity ✅ · Ollama Cloud ✅ · Copilot, Cursor, Prepaid-Guthaben,
-  Claude-Account-Wechsel
+- [ ] **v3** – Antigravity ✅ · Ollama Cloud ✅ · Widgets ✅ · iOS-App ✅ · Copilot, Cursor,
+  Prepaid-Guthaben, Claude-Account-Wechsel
 
 ## Lizenz
 

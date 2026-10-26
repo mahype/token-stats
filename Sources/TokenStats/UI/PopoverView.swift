@@ -1,4 +1,5 @@
 import SwiftUI
+import TokenStatsCore
 
 /// Popover, 372 pt breit: Kopf mit Seitenwahl · Tabs je Client · Seite · Fußzeile (SPEC §3).
 struct PopoverView: View {
@@ -342,99 +343,6 @@ private struct StatusLine: View {
             .font(.system(size: 11))
             .foregroundStyle(severity.map { AnyShapeStyle($0.color) } ?? AnyShapeStyle(.secondary))
             .fixedSize(horizontal: false, vertical: true)
-    }
-}
-
-/// Eine Meter-Zeile mit Balken, Pace-Marke und Reset-Zeit (SPEC §3.4).
-private struct MeterRow: View {
-    let window: LimitWindow
-
-    var body: some View {
-        let elapsed = window.elapsedFraction()
-        VStack(spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(window.name).font(.system(size: 12.5, weight: .semibold))
-                    + Text(window.scopeNote.map { "  \($0)" } ?? "").font(.system(size: 11)).foregroundColor(.secondary)
-                Spacer()
-                Text(Format.percent(window.percent))
-                    .font(.system(size: 12.5, weight: .bold))
-                    .foregroundStyle(window.severity.color)
-                    .monospacedDigit()
-            }
-            MeterBar(percent: window.percent, elapsed: elapsed, color: window.severity.color)
-                .frame(height: 6)
-            // Ollama nennt keine Reset-Zeiten – dann bleibt die Zeile weg statt leer.
-            if window.resetsAt != nil || elapsed != nil {
-                HStack {
-                    if let resetsAt = window.resetsAt { Text("Reset \(Format.reset(resetsAt))") }
-                    Spacer()
-                    if let elapsed, let windowLength = window.windowLength {
-                        let onPace = abs(window.percent - elapsed) < Format.paceTolerance
-                        Text(Format.pace(percent: window.percent, elapsed: elapsed, windowLength: windowLength))
-                            .fontWeight(onPace ? .regular : .semibold)
-                            .foregroundStyle(onPace ? Color.secondary : window.severity.color)
-                    }
-                }
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-                .monospacedDigit()
-            }
-        }
-    }
-}
-
-/// Balken mit Pace-Marke; der Abstand zwischen Füllstand und Marke ist schraffiert (SPEC §3.4):
-/// kräftig, wenn der Verbrauch der Zeit voraus ist, blass, wenn Kontingent liegen bleibt.
-private struct MeterBar: View {
-    let percent: Double
-    let elapsed: Double?
-    let color: Color
-
-    var body: some View {
-        GeometryReader { geo in
-            let width = geo.size.width
-            let used = min(max(percent, 0), 1)
-            let showGap = elapsed.map { abs(used - $0) >= Format.paceTolerance } ?? false
-            ZStack(alignment: .leading) {
-                ZStack(alignment: .leading) {
-                    Rectangle().fill(.quaternary)
-                    Rectangle().fill(color).frame(width: width * min(used, elapsed ?? used))
-                    if let elapsed, showGap {
-                        let ahead = used > elapsed
-                        Hatch()
-                            .stroke(color, lineWidth: 1.5)
-                            .background(color.opacity(ahead ? 0.55 : 0))
-                            .opacity(ahead ? 1 : 0.6)
-                            .frame(width: width * abs(used - elapsed))
-                            .clipped()
-                            .offset(x: width * min(used, elapsed))
-                    }
-                }
-                .clipShape(Capsule())
-                if let elapsed {
-                    Rectangle()
-                        .fill(.primary.opacity(0.45))
-                        .frame(width: 2, height: 10)
-                        .offset(x: width * elapsed - 1)
-                }
-            }
-        }
-    }
-}
-
-/// Diagonale Schraffur für die Pace-Fläche.
-private struct Hatch: Shape {
-    var spacing: CGFloat = 4
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        var x = rect.minX - rect.height
-        while x < rect.maxX {
-            path.move(to: CGPoint(x: x, y: rect.maxY))
-            path.addLine(to: CGPoint(x: x + rect.height, y: rect.minY))
-            x += spacing
-        }
-        return path
     }
 }
 

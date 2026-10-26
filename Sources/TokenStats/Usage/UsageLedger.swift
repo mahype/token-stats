@@ -1,13 +1,10 @@
 import Foundation
+import TokenStatsCore
 
 /// Liest die Session-Logs inkrementell ein und hält Tokens pro Tag und Modell
 /// in einer kleinen SQLite-Datei (SPEC §7). Beim Öffnen wird nichts neu geparst.
 actor UsageLedger {
-    struct Row: Equatable, Sendable {
-        var day: String         // "2026-09-28", lokale Zeit
-        var model: String
-        var counts: TokenCounts
-    }
+    typealias Row = UsageRow
 
     private let db: SQLiteDB
     private let home = FileManager.default.homeDirectoryForCurrentUser

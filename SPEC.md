@@ -376,6 +376,82 @@ struct LimitWindow {
   behalten, Wechsel blockieren solange eine Session läuft (PID-Prüfung analog
   `~/.claude/sessions/<pid>.json`).
 
+### Widgets (Issue #10, umgesetzt 26.10.2026)
+
+Verbrauch und Limits ohne Klick aufs Menüleistensymbol: zwei WidgetKit-Widgets für
+Mitteilungszentrale und Schreibtisch, je klein, mittel und groß.
+
+- **„Verbrauch“:** Tokens und API-Vergleichswert, klein als zwei Kennzahlen, mittel dazu
+  das Tagesdiagramm (bei „Heute“ stattdessen Input/Output/Cache), groß zusätzlich die
+  Aufschlüsselung je Modell. Zeitraum (Standard „Heute“) und Anbieter (Standard „Alle“)
+  sind Widget-Konfiguration per `AppIntent`. Der Zeitraum gilt für alle Größen – auch für
+  das kleine Widget, damit die Einstellung nicht in einer Größe wirkungslos ist.
+  Der Geldbetrag erscheint nur, wenn „API-Vergleichswert in Geld anzeigen“ an ist.
+- **„Limits“:** die Meter-Zeilen mit Pace-Marke wie im Popover, klein zwei Fenster,
+  mittel bis zu vier in zwei Spalten, groß alle Anbieter. Anbieter wählbar, Standard ist
+  der mit dem knappsten Limit. In den schmalen Spalten fällt der Zusatz („7 d, alle
+  Modelle“) weg, klein stehen Reset und Pace untereinander.
+- Klick aufs Widget öffnet das Popover auf der passenden Seite und beim passenden
+  Anbieter, über das URL-Schema `tokenstats://usage|limits?provider=…&period=…`.
+- **Datenweg:** Die Erweiterung ist sandboxed, fragt keine Endpunkte ab, liest keine
+  Zugangsdaten und öffnet kein `usage.sqlite`. Die App schreibt `widgets.json` in die App
+  Group – Limits je Anbieter und die fertig gerechneten Zusammenfassungen je Zeitraum,
+  einige Kilobyte – und stößt `reloadAllTimelines()` an. Ein neuer Limit-Stand lädt
+  sofort neu, Verbrauchsänderungen allein höchstens alle 300 s (wie der Abfragetakt),
+  damit das Neuladen nicht im 60-s-Takt des Log-Scans läuft. Timeline: eine Entry,
+  `policy: .never`. Ohne Datei zeigt das Widget „Token Stats öffnen“ statt Nullwerten.
+- **App Group mit Team-ID-Präfix** (`<Team-ID>.de.mahype.TokenStats`, nicht `group.…`
+  wie im Issue vorgeschlagen): Xcode verlangt für `group.`-Kennungen auf dem Mac ein
+  Provisioning-Profil, und macOS lässt nur Apps desselben Teams an den Container –
+  ad hoc signierte Builds bekommen „keine Berechtigung“. Die Kennung folgt darum der
+  Signatur (`APP_GROUP` in project.yml, aus `DEVELOPMENT_TEAM`) und steht in der
+  Info.plist von App und Erweiterung. Im Release ist das `2GA7DQ3P3Z.…`; `sign-sparkle.sh`
+  signiert die App mit `--preserve-metadata=entitlements` nach, die App Group bleibt also
+  erhalten. Debug-Builds signiert das Makefile mit einem vorhandenen
+  Apple-Development-Zertifikat, sonst ad hoc ohne Widget-Daten.
+- **Gemeinsamer Kern `TokenStatsCore`** (lokales Swift-Paket): `Format`, `ProviderSnapshot`,
+  `TokenCounts`/`PriceTable`, `UsagePeriod`/`UsageSummary`, Zustandsfarben, `MeterRow`,
+  `DayChart`, die Widget-Views und die Demo-Werte. App und Erweiterung binden es statisch
+  ein; die iOS-Fassung (Issue #11) soll dieselben Views nutzen.
+
+### iOS-App (Issue #11, umgesetzt 26.10.2026)
+
+„Darf ich noch?“ auch unterwegs: Das iPhone zeigt den Stand der Macs, es rechnet nichts
+selbst und fragt keinen Anbieter ab – es hat weder Zugangsdaten noch Logs.
+
+- **Datenweg CloudKit, private Datenbank:** Die Mac-App schreibt denselben
+  `WidgetSnapshot` wie für die Widgets als Datensatz `Snapshot` je Mac (Zone `Snapshots`,
+  Record-Name = zufällige Mac-Kennung aus den UserDefaults, Felder `machine`, `writtenAt`,
+  `version`, `payload` als JSON). Eigene Zone statt Abfrage, weil `recordZoneChanges`
+  keinen Index im CloudKit-Dashboard braucht und eine `CKRecordZoneSubscription` den
+  stillen Push liefert. Übertragen wird im Takt der Widget-Timeline (neuer Limit-Stand
+  sofort, Verbrauch allein alle 300 s), nie doppelt.
+- **Standard aus:** Einstellung „Stand nach iCloud übertragen“ unter „iPhone“, damit
+  „keine Cloud“ für Nutzer ohne iPhone weiter gilt. Ausgegraut, wenn der Build keine
+  iCloud-Berechtigung trägt (Prüfung per `SecTaskCopyValueForEntitlement`, weil
+  `CKContainer` sonst abbricht).
+- **iCloud nur auf Wunsch im Build:** `make build ICLOUD=1` nimmt
+  `Config/TokenStats-iCloud.entitlements`. Nicht Standard, weil Xcode für iCloud ein
+  Provisioning-Profil verlangt – für Developer ID eines mit iCloud-Capability, das als
+  `embedded.provisionprofile` in die App kommt. Der DMG-Weg ohne Store bleibt damit
+  möglich; der Container `iCloud.de.mahype.TokenStats` muss einmal im Developer-Portal
+  angelegt werden, das CloudKit-Schema entsteht beim ersten Schreiben (Development) und
+  wird vor dem Release nach Production übernommen.
+- **App:** Target `TokenStatsiOS` aus `TokenStatsCore`, TabView „Limits“ (Abschnitt je
+  Mac, darin je Anbieter Kopf, Meter mit Pace-Marke, Extras) und „Verbrauch“ (Zeitraum,
+  Anbieter, „Alle Macs“ zusammengerechnet plus Abschnitt je Mac, Tagesdiagramm, Modelle).
+  Neben jedem Mac steht, wie alt der Stand ist. Pull-to-refresh und Nachladen beim
+  Vordergrund; stiller Push lädt nach und stößt die Widgets an. `TOKENSTATS_DEMO=1`
+  zeigt Demo-Werte zweier Macs (Simulator, Screenshots), `TOKENSTATS_TAB=usage` startet
+  auf „Verbrauch“.
+- **Widgets:** dieselben Quellen wie auf dem Mac (`Sources/TokenStatsWidgets`), Daten aus
+  dem iCloud-Cache `machines.json` in der App Group `group.de.mahype.TokenStats` (iOS-üblich;
+  auf dem Mac Team-ID-Präfix), gezeigt wird der zuletzt übertragene Mac mit Fußzeile
+  „work · vor 12 Min.“. Sperrbildschirm: `accessoryCircular` (Gauge des knappsten Limits),
+  `accessoryRectangular` (zwei Fenster mit Reset), `accessoryInline`.
+- Mitteilungen bei 50/80/90 % bleiben v2-Thema; auf dem iPhone könnte sie der Push
+  auslösen. Apple-Watch-Komplikation und Windows-Weg (WebDAV statt CloudKit) offen.
+
 ### Abkürzung, falls schnell ein Ergebnis gebraucht wird
 Dasselbe Datenmodell als Skript unter **SwiftBar** — Stunden statt Wochenende, opfert
 aber Mitteilungen, Pace-Marke, Verbrauchsseite und Account-Wechsel.
@@ -408,6 +484,11 @@ Claude-Account-Wechsel, optional Verbrauchs-Sync über iCloud Drive zwischen meh
   (`Scripts/update-pricing.sh` erzeugt `Resources/pricing.json` aus LiteLLM, Stand im
   Dateikopf). Nachladen zur Laufzeit wäre eine zusätzliche Netzverbindung.
 - Signierung/Notarisierung und Verteilweg (direktes `.app`, Homebrew Cask?).
+- Widgets im Release noch nicht geprüft: Ob Notarisierung und Sparkle-Nachsignierung die
+  Erweiterung mit App-Group-Entitlement durchwinken, zeigt erst das nächste `make release`.
+- iCloud-Weg nicht live geprüft: braucht den Container im Developer-Portal, ein
+  Developer-ID-Profil mit iCloud für den Mac und TestFlight für das iPhone. Geprüft sind
+  Umwandlung und Cache (Tests) sowie die iOS-App im Simulator mit Demo-Werten.
 - Prüfen, ob eine bestehende App genügt, bevor gebaut wird: Claude Tracker,
   ClaudeUsageBar, claude-codex-limits, ClaudeMeter, Usagebar, SessionWatcher.
   Eigenbau lohnt vor allem wegen der Multi-Provider-Breite und der Verbrauchsseite.

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Ergänzt die von Xcode erzeugte Info.plist der iOS-App: App Group für die Widgets und
+     der stille Push aus CloudKit (Issue #11). -->
+<plist version="1.0">
+<dict>
+    <key>TokenStatsAppGroup</key>
+    <string>$(APP_GROUP)</string>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>remote-notification</string>
+    </array>
+</dict>
+</plist>

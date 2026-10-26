@@ -1,4 +1,5 @@
 import Foundation
+import TokenStatsCore
 
 /// Ein Verbrauchsereignis aus einem Session-Log.
 struct UsageEvent: Equatable, Sendable {
