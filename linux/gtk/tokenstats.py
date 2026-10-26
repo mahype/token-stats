@@ -101,7 +101,7 @@ def fetch_limits():
 
 def load_prices():
     try:
-        d = json.load(open(f"{HERE}/../Sources/TokenStats/Resources/pricing.json"))
+        d = json.load(open(f"{HERE}/../../Sources/TokenStats/Resources/pricing.json"))
         return d["models"], d["asOf"]
     except (OSError, ValueError, KeyError):
         return {}, None

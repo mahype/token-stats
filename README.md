@@ -174,8 +174,8 @@ Eine Portierung als Tray-App für Windows 10/11 (nativ ARM64, auch x64) liegt in
 
 ### Linux
 
-Ein Tray-Widget für Linux (Python/GTK3, getestet unter KDE Plasma/Wayland, nur Claude Code)
-liegt in [`linux/`](linux/README.md) – gleiche Datenquellen, Rechnung und Preistabelle.
+Tray-Widgets für Linux (natives Plasma-6-Widget und eine GTK3-Variante für andere Desktops, nur Claude Code)
+liegen in [`linux/`](linux/README.md) – gleiche Datenquellen, Rechnung und Preistabelle.
 
 ## Entfernen
 
