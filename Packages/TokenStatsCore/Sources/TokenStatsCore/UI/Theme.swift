@@ -1,28 +1,50 @@
-import AppKit
 import SwiftUI
+#if canImport(AppKit)
+import AppKit
+#elseif canImport(UIKit)
+import UIKit
+#endif
 
 /// Zustandsfarben aus dem Entwurf, je für Hell und Dunkel.
 extension Severity {
-    var nsColor: NSColor {
+    private var hexValues: (light: UInt32, dark: UInt32) {
         switch self {
-        case .ok: .dynamic(light: 0x2F8F5B, dark: 0x4CBE83)
-        case .warn: .dynamic(light: 0xC1860F, dark: 0xE0A838)
-        case .crit: .dynamic(light: 0xC04329, dark: 0xE7705A)
+        case .ok: (0x2F8F5B, 0x4CBE83)
+        case .warn: (0xC1860F, 0xE0A838)
+        case .crit: (0xC04329, 0xE7705A)
         }
     }
 
-    var color: Color { Color(nsColor: nsColor) }
+    public var color: Color { Color.dynamic(light: hexValues.light, dark: hexValues.dark) }
+
+    #if canImport(AppKit)
+    public var nsColor: NSColor { .dynamic(light: hexValues.light, dark: hexValues.dark) }
+    #endif
 }
 
+extension Color {
+    /// Löst je nach Erscheinungsbild auf – in der App, im Widget und auf iOS gleich.
+    public static func dynamic(light: UInt32, dark: UInt32) -> Color {
+        #if canImport(AppKit)
+        Color(nsColor: .dynamic(light: light, dark: dark))
+        #else
+        Color(uiColor: UIColor { traits in
+            UIColor(hex: traits.userInterfaceStyle == .dark ? dark : light)
+        })
+        #endif
+    }
+}
+
+#if canImport(AppKit)
 extension NSColor {
-    static func dynamic(light: UInt32, dark: UInt32) -> NSColor {
+    public static func dynamic(light: UInt32, dark: UInt32) -> NSColor {
         NSColor(name: nil) { appearance in
             let isDark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
             return NSColor(hex: isDark ? dark : light)
         }
     }
 
-    convenience init(hex: UInt32) {
+    public convenience init(hex: UInt32) {
         self.init(
             srgbRed: CGFloat((hex >> 16) & 0xFF) / 255,
             green: CGFloat((hex >> 8) & 0xFF) / 255,
@@ -31,11 +53,23 @@ extension NSColor {
         )
     }
 }
+#elseif canImport(UIKit)
+extension UIColor {
+    public convenience init(hex: UInt32) {
+        self.init(
+            red: CGFloat((hex >> 16) & 0xFF) / 255,
+            green: CGFloat((hex >> 8) & 0xFF) / 255,
+            blue: CGFloat(hex & 0xFF) / 255,
+            alpha: 1
+        )
+    }
+}
+#endif
 
 /// Roboterkopf aus dem Entwurf, in einem 24×24-Raster gezeichnet.
-enum RobotGlyph {
+public enum RobotGlyph {
     /// Linien: Kopf, Antenne, Mund, Ohren.
-    static func strokes(in rect: CGRect) -> CGPath {
+    public static func strokes(in rect: CGRect) -> CGPath {
         let path = CGMutablePath()
         let t = transform(for: rect)
         path.addPath(CGPath(roundedRect: CGRect(x: 4, y: 8, width: 16, height: 11), cornerWidth: 3.2, cornerHeight: 3.2, transform: nil))
@@ -47,7 +81,7 @@ enum RobotGlyph {
     }
 
     /// Flächen: Augen und Antennenkugel.
-    static func fills(in rect: CGRect) -> CGPath {
+    public static func fills(in rect: CGRect) -> CGPath {
         let path = CGMutablePath()
         let t = transform(for: rect)
         path.addEllipse(in: CGRect(x: 9 - 1.35, y: 13 - 1.35, width: 2.7, height: 2.7))
@@ -56,7 +90,7 @@ enum RobotGlyph {
         return path.copy(using: [t]) ?? path
     }
 
-    static func lineWidth(in rect: CGRect) -> CGFloat { 1.8 * rect.width / 24 }
+    public static func lineWidth(in rect: CGRect) -> CGFloat { 1.8 * rect.width / 24 }
 
     private static func transform(for rect: CGRect) -> CGAffineTransform {
         let scale = min(rect.width, rect.height) / 24
@@ -64,10 +98,14 @@ enum RobotGlyph {
     }
 }
 
-struct RobotIcon: View {
-    var size: CGFloat = 15
+public struct RobotIcon: View {
+    public var size: CGFloat
 
-    var body: some View {
+    public init(size: CGFloat = 15) {
+        self.size = size
+    }
+
+    public var body: some View {
         Canvas { context, canvasSize in
             let rect = CGRect(origin: .zero, size: canvasSize)
             context.stroke(

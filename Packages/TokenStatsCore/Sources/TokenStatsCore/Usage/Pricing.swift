@@ -1,19 +1,27 @@
 import Foundation
 
 /// Tokenzahlen eines Ereignisses oder einer Summe, Cache getrennt (SPEC §3.5).
-struct TokenCounts: Codable, Equatable, Sendable {
-    var input: Int = 0          // ohne Cache
-    var output: Int = 0
-    var cacheWrite5m: Int = 0
-    var cacheWrite1h: Int = 0
-    var cacheRead: Int = 0
+public struct TokenCounts: Codable, Equatable, Sendable {
+    public var input: Int = 0          // ohne Cache
+    public var output: Int = 0
+    public var cacheWrite5m: Int = 0
+    public var cacheWrite1h: Int = 0
+    public var cacheRead: Int = 0
 
-    var cacheWrite: Int { cacheWrite5m + cacheWrite1h }
-    var cache: Int { cacheWrite + cacheRead }
-    var total: Int { input + output + cache }
-    var isZero: Bool { total == 0 }
+    public init(input: Int = 0, output: Int = 0, cacheWrite5m: Int = 0, cacheWrite1h: Int = 0, cacheRead: Int = 0) {
+        self.input = input
+        self.output = output
+        self.cacheWrite5m = cacheWrite5m
+        self.cacheWrite1h = cacheWrite1h
+        self.cacheRead = cacheRead
+    }
 
-    static func + (lhs: TokenCounts, rhs: TokenCounts) -> TokenCounts {
+    public var cacheWrite: Int { cacheWrite5m + cacheWrite1h }
+    public var cache: Int { cacheWrite + cacheRead }
+    public var total: Int { input + output + cache }
+    public var isZero: Bool { total == 0 }
+
+    public static func + (lhs: TokenCounts, rhs: TokenCounts) -> TokenCounts {
         TokenCounts(
             input: lhs.input + rhs.input, output: lhs.output + rhs.output,
             cacheWrite5m: lhs.cacheWrite5m + rhs.cacheWrite5m, cacheWrite1h: lhs.cacheWrite1h + rhs.cacheWrite1h,
@@ -24,13 +32,21 @@ struct TokenCounts: Codable, Equatable, Sendable {
 
 /// Mitgelieferte Listenpreise mit Datumsstempel (`Scripts/update-pricing.sh`).
 /// Der Betrag daraus ist ein API-Vergleichswert, keine Kosten.
-struct PriceTable: Sendable {
-    struct Price: Codable, Sendable {
-        var input: Double
-        var output: Double
-        var cacheRead: Double
-        var cacheWrite5m: Double
-        var cacheWrite1h: Double
+public struct PriceTable: Sendable {
+    public struct Price: Codable, Sendable {
+        public var input: Double
+        public var output: Double
+        public var cacheRead: Double
+        public var cacheWrite5m: Double
+        public var cacheWrite1h: Double
+
+        public init(input: Double, output: Double, cacheRead: Double, cacheWrite5m: Double, cacheWrite1h: Double) {
+            self.input = input
+            self.output = output
+            self.cacheRead = cacheRead
+            self.cacheWrite5m = cacheWrite5m
+            self.cacheWrite1h = cacheWrite1h
+        }
     }
 
     private struct File: Codable {
@@ -38,21 +54,23 @@ struct PriceTable: Sendable {
         var models: [String: Price]
     }
 
-    let asOf: Date?
-    let models: [String: Price]
+    public let asOf: Date?
+    public let models: [String: Price]
 
-    static let bundled: PriceTable = {
+    /// `pricing.json` aus dem Hauptbundle – in der Widget-Erweiterung leer, die bekommt
+    /// fertige Beträge von der App.
+    public static let bundled: PriceTable = {
         guard let url = Bundle.main.url(forResource: "pricing", withExtension: "json"),
               let data = try? Data(contentsOf: url) else { return PriceTable(asOf: nil, models: [:]) }
         return (try? PriceTable(json: data)) ?? PriceTable(asOf: nil, models: [:])
     }()
 
-    init(asOf: Date?, models: [String: Price]) {
+    public init(asOf: Date?, models: [String: Price]) {
         self.asOf = asOf
         self.models = models
     }
 
-    init(json: Data) throws {
+    public init(json: Data) throws {
         let file = try JSONDecoder().decode(File.self, from: json)
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
@@ -61,7 +79,7 @@ struct PriceTable: Sendable {
     }
 
     /// Exakter Name, sonst ohne Datums-Suffix, sonst längster bekannter Präfix.
-    func price(for model: String) -> Price? {
+    public func price(for model: String) -> Price? {
         if let price = models[model] { return price }
         let undated = model.replacing(/-\d{8}$/, with: "")
         if let price = models[undated] { return price }
@@ -70,7 +88,7 @@ struct PriceTable: Sendable {
     }
 
     /// Dollar-Betrag, `nil` wenn das Modell nicht in der Tabelle steht.
-    func value(of counts: TokenCounts, model: String) -> Double? {
+    public func value(of counts: TokenCounts, model: String) -> Double? {
         guard let price = price(for: model) else { return nil }
         return Double(counts.input) * price.input
             + Double(counts.output) * price.output
@@ -81,8 +99,8 @@ struct PriceTable: Sendable {
 }
 
 /// "claude-opus-5-5" → "Opus 5.5", "gpt-5.6-sol" → "GPT-5.6 Sol"
-enum ModelName {
-    static func display(_ model: String) -> String {
+public enum ModelName {
+    public static func display(_ model: String) -> String {
         var name = model.replacing(/-\d{8}$/, with: "")
         if name.hasPrefix("claude-") {
             name.removeFirst("claude-".count)

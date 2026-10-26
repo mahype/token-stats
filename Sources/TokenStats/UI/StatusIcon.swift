@@ -1,4 +1,5 @@
 import AppKit
+import TokenStatsCore
 
 /// Zeichnet das Menüleisten-Symbol in den drei Anzeige-Modi (SPEC §2).
 enum StatusIcon {

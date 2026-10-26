@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import TokenStatsCore
 
 /// Hält den letzten Stand je Anbieter, fragt im Takt ab und respektiert Rate-Limits.
 @MainActor @Observable

@@ -1,6 +1,7 @@
 import AppKit
 import Observation
 import SwiftUI
+import TokenStatsCore
 
 /// Menüleisten-Symbol: Linksklick öffnet das Popover, Rechtsklick ein Kurzmenü (SPEC §2).
 @MainActor
@@ -8,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = AppSettings()
     private lazy var store = UsageStore(providers: [ClaudeProvider(), CodexProvider(), AntigravityProvider(), OllamaProvider()], settings: settings)
     private lazy var consumption = ConsumptionStore(settings: settings)
+    private lazy var widgets = WidgetBridge(store: store, consumption: consumption, settings: settings)
     private let updater = Updater()
 
     private var statusItem: NSStatusItem!
@@ -48,6 +50,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         observeIcon()
         store.start()
         consumption.start()
+        widgets.start()
+    }
+
+    /// `tokenstats://usage?provider=claude` aus einem Widget: Popover auf der passenden Seite öffnen.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        guard let target = urls.lazy.compactMap(WidgetLink.parse).first else { return }
+        showPopover(selectedID: target.provider, showUsage: target.page == .usage)
     }
 
     // MARK: Symbol
@@ -93,10 +102,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             popover.performClose(nil)
             return
         }
-        // Frische View bei jedem Öffnen: knappster Tab aktiv, immer Seite „Limits“.
+        showPopover()
+    }
+
+    /// Frische View bei jedem Öffnen: knappster Tab aktiv, immer Seite „Limits“ – außer ein
+    /// Widget hat Anbieter und Seite vorgegeben.
+    private func showPopover(selectedID: String? = nil, showUsage: Bool = false) {
+        guard let button = statusItem?.button else { return }
+        if popover.isShown { popover.performClose(nil) }
         consumption.refresh()
         let controller = NSHostingController(rootView: PopoverView(
-            store: store, consumption: consumption, settings: settings
+            store: store, consumption: consumption, settings: settings,
+            selectedID: selectedID, showUsage: showUsage
         ) { [weak self] in
             self?.openSettings()
         })

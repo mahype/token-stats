@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import ServiceManagement
+import TokenStatsCore
 
 enum MenuBarMode: String, CaseIterable, Identifiable {
     case icon, iconPercent = "icon+pct", iconBars = "icon+bars"

@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import TokenStatsCore
 @testable import TokenStats
 
 // Zeilenformen wie in ~/.claude/projects und ~/.codex/sessions (Stand 09/2026).

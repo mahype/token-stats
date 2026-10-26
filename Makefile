@@ -12,13 +12,21 @@ DMG := $(BUILD_DIR)/Token-Stats-$(VERSION).dmg
 project:
 	xcodegen generate --quiet
 
+# Debug-Builds signieren mit einem „Apple Development“-Zertifikat aus dem Schlüsselbund, falls
+# eines da ist, sonst ad hoc. Die Widgets brauchen die Team-Signatur: Die App Group heißt
+# <Team-ID>.de.mahype.TokenStats (project.yml), und macOS lässt nur Apps desselben Teams an den
+# Container. Ad hoc signiert läuft die App, aber die Widgets bleiben bei „Token Stats öffnen“.
+DEV_IDENTITY ?= $(shell security find-identity -v -p codesigning 2>/dev/null | sed -n 's/.*"\(Apple Development: [^"]*\)".*/\1/p' | head -1)
+DEV_TEAM ?= $(shell [ -n "$(DEV_IDENTITY)" ] && security find-certificate -c "$(DEV_IDENTITY)" -p 2>/dev/null | openssl x509 -noout -subject 2>/dev/null | sed -n 's/.*OU *= *\([A-Z0-9]*\).*/\1/p')
+DEBUG_SIGNING := $(if $(DEV_TEAM),CODE_SIGN_IDENTITY="$(DEV_IDENTITY)" DEVELOPMENT_TEAM=$(DEV_TEAM),)
+
 build: project
 	xcodebuild -project TokenStats.xcodeproj -scheme TokenStats -configuration Debug \
-		-derivedDataPath $(BUILD_DIR) -quiet build
+		-derivedDataPath $(BUILD_DIR) -quiet build $(DEBUG_SIGNING)
 
 test: project
 	xcodebuild -project TokenStats.xcodeproj -scheme TokenStats -configuration Debug \
-		-derivedDataPath $(BUILD_DIR) -quiet test
+		-derivedDataPath $(BUILD_DIR) -quiet test $(DEBUG_SIGNING)
 
 run: build
 	-pkill -x "Token Stats"
