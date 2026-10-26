@@ -9,6 +9,9 @@ packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     from: "2.6.0"
+  # Gemeinsamer Kern von App und Widget-Erweiterung (Modell, Formate, Widget-Views).
+  TokenStatsCore:
+    path: Packages/TokenStatsCore
 
 settings:
   base:
@@ -19,6 +22,11 @@ settings:
     DEVELOPMENT_TEAM: ""
     ENABLE_HARDENED_RUNTIME: YES
     MARKETING_VERSION: "0.3.2"
+    # App Group für die Widgets (Issue #10), mit Team-ID-Präfix: macOS lässt nur Apps desselben
+    # Teams an den Container, und `group.`-Kennungen verlangen ein Provisioning-Profil. Darum folgt
+    # die Kennung der Signatur: Sven → 2GA7DQ3P3Z.…, ein Debug-Build mit eigenem Zertifikat →
+    # eigene Team-ID. App und Erweiterung lesen sie aus ihrer Info.plist (TokenStatsAppGroup).
+    APP_GROUP: "$(DEVELOPMENT_TEAM).de.mahype.TokenStats"
     # Sparkle vergleicht CFBundleVersion mit dem Appcast – darum identisch mit der Version.
     CURRENT_PROJECT_VERSION: "$(MARKETING_VERSION)"
 
@@ -30,6 +38,14 @@ targets:
       - path: Sources/TokenStats
     dependencies:
       - package: Sparkle
+      - package: TokenStatsCore
+      - target: TokenStatsWidgets
+    # Die App bleibt ohne Sandbox, weil sie Schlüsselbund und ~/.claude, ~/.codex lesen muss.
+    # XcodeGen schreibt die Entitlements-Datei bei jedem Lauf neu, darum steht der Inhalt hier.
+    entitlements:
+      path: Config/TokenStats.entitlements
+      properties:
+        com.apple.security.application-groups: ["$(APP_GROUP)"]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: de.mahype.TokenStats
@@ -43,6 +59,30 @@ targets:
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
         ENABLE_APP_SANDBOX: NO
 
+  # WidgetKit-Erweiterung (Issue #10): immer sandboxed, liest nur widgets.json aus der App Group.
+  TokenStatsWidgets:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Sources/TokenStatsWidgets
+    dependencies:
+      - package: TokenStatsCore
+    entitlements:
+      path: Config/TokenStatsWidgets.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups: ["$(APP_GROUP)"]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.mahype.TokenStats.Widgets
+        PRODUCT_NAME: TokenStatsWidgets
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Config/Widgets-Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: Token Stats
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        ENABLE_APP_SANDBOX: YES
+        SKIP_INSTALL: YES
+
   TokenStatsTests:
     type: bundle.unit-test
     platform: macOS
@@ -50,6 +90,7 @@ targets:
       - path: Tests/TokenStatsTests
     dependencies:
       - target: TokenStats
+      - package: TokenStatsCore
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES

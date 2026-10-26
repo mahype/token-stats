@@ -1,4 +1,5 @@
 import SwiftUI
+import TokenStatsCore
 
 /// Einstellungsfenster, Abschnitte „Anzeige“, „Verbrauch“, „Aktualisierung“ und „Updates“ (SPEC §4).
 struct SettingsView: View {

@@ -1,5 +1,6 @@
 import Foundation
 import SQLite3
+import TokenStatsCore
 
 /// Schmaler Wrapper um libsqlite3 – mehr braucht die Aggregat-Datei nicht.
 final class SQLiteDB {

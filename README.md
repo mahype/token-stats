@@ -48,6 +48,10 @@ keine Cloud, keine Telemetrie.
   nie eine leere Anzeige.
 - Rechtsklick aufs Symbol: Aktualisieren, Anzeige-Modus, Bei Anmeldung starten,
   Einstellungen (auch mit `⌘,` bei offenem Popover).
+- **Widgets** für Schreibtisch und Mitteilungszentrale: „Verbrauch“ mit Tokens,
+  API-Vergleichswert, Tagesdiagramm und Modellen für Heute, 7 Tage, 30 Tage oder den
+  Abrechnungsmonat – und „Limits“ mit den Metern eines Anbieters samt Pace-Marke. Klick
+  aufs Widget öffnet das Popover auf der passenden Seite.
 
 <table>
   <tr>
@@ -97,6 +101,16 @@ Die drei Anzeige-Modi der Menüleiste:
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="screenshots/menubar-dark.png">
     <img src="screenshots/menubar-light.png" width="270" alt="Menüleisten-Symbol: nur Icon, Icon mit Prozent, Icon mit Balken">
+  </picture>
+</p>
+
+Die Widgets „Verbrauch“ und „Limits“ in Klein, Mittel und Groß (Zeitraum und Anbieter
+sind je Widget einstellbar):
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="screenshots/widgets-dark.png">
+    <img src="screenshots/widgets-light.png" width="560" alt="Widgets: Verbrauch heute und 7 Tage, Limits von Claude, Verbrauch 30 Tage mit Modellen">
   </picture>
 </p>
 
@@ -211,6 +225,7 @@ im Browser oder in einer Desktop-App verbrauchst, fehlt dort.
 | Tokenzahlen (nur lesen) | `~/.claude/projects/**/*.jsonl`, Session-Logs unter `~/.codex/` |
 | Letzter Stand der Limits | `~/Library/Application Support/TokenStats/state.json` (nur Prozente und Reset-Zeiten) |
 | Verbrauchs-Aggregat je Tag und Modell | `~/Library/Application Support/TokenStats/usage.sqlite` |
+| Stand für die Widgets | `~/Library/Group Containers/<Team-ID>.de.mahype.TokenStats/widgets.json` – Prozente, Reset-Zeiten, Tagessummen und Beträge, fertig gerechnet; keine Zugangsdaten |
 | Einstellungen | UserDefaults `de.mahype.TokenStats` |
 | Claude-Kontingent | `api.anthropic.com/api/oauth/usage` |
 | Codex-Kontingent | `chatgpt.com/backend-api/wham/usage` |
@@ -251,10 +266,17 @@ Gesamt-Tokenzahl würde in die Irre führen.
 | `make release` | Universal-Build als DMG nach `build/`: signiert, notarisiert, gestapelt |
 | `make publish` | Tag, GitHub-Release und Eintrag im Update-Feed für dieses DMG |
 | `make screenshots` | die Bilder dieser README nach `screenshots/` rendern (außer Einstellungen, siehe [CLAUDE.md](CLAUDE.md)) |
+| `swift build` in `Packages/TokenStatsCore` | nur den gemeinsamen Kern bauen |
 | `Scripts/update-pricing.sh` | Preistabelle aus LiteLLM aktualisieren |
 
 `TokenStats.xcodeproj` ist nicht eingecheckt, XcodeGen erzeugt es bei jedem Build.
 `usage.sqlite` löschen erzwingt ein komplettes Neueinlesen der Logs.
+
+Debug-Builds signiert `make build` mit einem „Apple Development“-Zertifikat aus dem
+Schlüsselbund, falls eines da ist, sonst ad hoc. Die Widgets brauchen die Team-Signatur:
+Die App Group heißt `<Team-ID>.de.mahype.TokenStats`, und macOS lässt nur Apps desselben
+Teams an den Container. Ad hoc signiert läuft die App, die Widgets zeigen dann aber nur
+„Token Stats öffnen“.
 
 | Pfad | Inhalt |
 |---|---|
@@ -262,6 +284,8 @@ Gesamt-Tokenzahl würde in die Irre führen.
 | `Sources/TokenStats/Model/` | Stand je Anbieter, Abruftakt, Rate-Limit-Behandlung, Einstellungen |
 | `Sources/TokenStats/Usage/` | Log-Parser, SQLite-Aggregat, Preistabelle |
 | `Sources/TokenStats/UI/` | Popover, Verbrauchsseite, Einstellungen, Menüleisten-Symbol |
+| `Sources/TokenStatsWidgets/` | WidgetKit-Erweiterung: Konfiguration und Timelines der Widgets „Verbrauch“ und „Limits“ |
+| `Packages/TokenStatsCore/` | gemeinsamer Kern von App und Widgets: Datenmodell, Formate, Preistabelle, Zustandsfarben, Widget-Views, Demo-Werte |
 | `Tests/TokenStatsTests/` | Parser- und Verbrauchstests |
 
 Das vollständige Design mit den Begründungen hinter den Entscheidungen steht in

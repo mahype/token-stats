@@ -1,8 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Ergänzt die von Xcode erzeugte Info.plist um die Sparkle-Schlüssel (SPEC §7). -->
+<!-- Ergänzt die von Xcode erzeugte Info.plist um die Sparkle-Schlüssel (SPEC §7) und das
+     URL-Schema tokenstats://, über das die Widgets das Popover öffnen (Issue #10). -->
 <plist version="1.0">
 <dict>
+    <key>TokenStatsAppGroup</key>
+    <string>$(APP_GROUP)</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>de.mahype.TokenStats</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>tokenstats</string>
+            </array>
+        </dict>
+    </array>
     <key>SUFeedURL</key>
     <string>https://mahype.github.io/token-stats/appcast.xml</string>
     <key>SUPublicEDKey</key>

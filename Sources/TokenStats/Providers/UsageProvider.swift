@@ -1,4 +1,5 @@
 import Foundation
+import TokenStatsCore
 
 /// Ein Anbieter = eine Datei, die dieses Protokoll erfüllt (SPEC §7).
 protocol UsageProvider: Sendable {

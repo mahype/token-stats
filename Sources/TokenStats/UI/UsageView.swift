@@ -1,4 +1,5 @@
 import SwiftUI
+import TokenStatsCore
 
 /// Seite „Verbrauch“: Tokens und API-Vergleichswert je Zeitraum (SPEC §3.5).
 struct UsageView: View {
@@ -140,38 +141,6 @@ private struct Tile: View {
         .padding(.vertical, 9)
         .background(RoundedRectangle(cornerRadius: 8).fill(.background))
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.separator))
-    }
-}
-
-/// Eine Säule pro Tag, der heutige Tag hervorgehoben.
-private struct DayChart: View {
-    let days: [UsageSummary.DayTotal]
-
-    var body: some View {
-        let peak = max(days.map(\.tokens).max() ?? 0, 1)
-        let showLabels = days.count <= 7
-        HStack(alignment: .bottom, spacing: days.count > 14 ? 2 : 6) {
-            ForEach(days) { day in
-                let isToday = day.id == days.last?.id
-                VStack(spacing: 4) {
-                    GeometryReader { geo in
-                        VStack {
-                            Spacer(minLength: 0)
-                            UnevenRoundedRectangle(topLeadingRadius: 3, topTrailingRadius: 3)
-                                .fill(Color.accentColor.opacity(isToday ? 1 : 0.55))
-                                .frame(height: max(geo.size.height * CGFloat(day.tokens) / CGFloat(peak), day.tokens > 0 ? 2 : 0))
-                        }
-                    }
-                    if showLabels {
-                        Text(day.day.formatted(.dateTime.weekday(.abbreviated).locale(Format.locale)))
-                            .font(.system(size: 9.5, weight: isToday ? .bold : .regular))
-                            .foregroundStyle(isToday ? .primary : .secondary)
-                    }
-                }
-                .help("\(day.day.formatted(.dateTime.weekday(.wide).day().month().locale(Format.locale))): \(Format.tokens(day.tokens)) Tokens")
-            }
-        }
-        .frame(height: showLabels ? 72 : 56)
     }
 }
 

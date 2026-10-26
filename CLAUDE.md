@@ -18,8 +18,18 @@ Einstellungen, Mitteilung): https://claude.ai/artifact/XYL3hXk3QU1F5wpBQzkd3w
 ## Bauen
 
 `make build` · `make test` · `make run` (XcodeGen erzeugt `TokenStats.xcodeproj` aus
-`project.yml`; das Projekt ist nicht eingecheckt). Das Makefile setzt `DEVELOPER_DIR`,
+`project.yml`; das Projekt ist nicht eingecheckt, die Entitlements-Dateien in `Config/`
+ebenfalls nicht – ihr Inhalt steht in `project.yml`). Das Makefile setzt `DEVELOPER_DIR`,
 weil `xcode-select` hier auf die Command Line Tools zeigt.
+
+Debug-Builds signiert das Makefile mit einem „Apple Development“-Zertifikat aus dem
+Schlüsselbund, falls vorhanden, sonst ad hoc. Nur mit Team-Signatur bekommen die Widgets
+Daten: Die App Group heißt `<Team-ID>.de.mahype.TokenStats` (SPEC §7 „Widgets“). Ob die App
+sie schreiben kann, steht im Debug-Build in stderr („Widget-Stand geschrieben“) –
+`open --stderr datei "build/…/Token Stats.app"`; der Container selbst ist für das Terminal
+nicht lesbar (TCC). Widgets im Gerätetest: Mitteilungszentrale → „Widgets bearbeiten“ →
+„Token Stats“. Gemeinsamer Code von App und Erweiterung liegt im Paket
+`Packages/TokenStatsCore` (`swift build` dort baut ihn allein).
 
 Die App cacht den letzten Stand in `~/Library/Application Support/TokenStats/state.json`
 und fragt nach einem Neustart erst nach Ablauf des Intervalls wieder ab — häufiges
@@ -33,8 +43,8 @@ gehören in beide Fassungen.
 `make test` startet die App als Test-Host und beendet dabei eine laufende Instanz —
 danach `make run`. Preistabelle aktualisieren: `Scripts/update-pricing.sh`.
 README-Bilder neu rendern: `make screenshots` (nur Debug-Build; Hell und Dunkel). Alle
-Werte sind Demo-Werte (`Screenshots.swift`) – für Screenshots nie echte Limits, Logs oder
-Kontonamen verwenden. Braucht keine Bildschirmaufnahme-Freigabe, weil die App
+Werte sind Demo-Werte (`DemoData` in TokenStatsCore, auch für die Widget-Vorschau) – für
+Screenshots nie echte Limits, Logs oder Kontonamen verwenden. Braucht keine Bildschirmaufnahme-Freigabe, weil die App
 ihre Views selbst zeichnet. Ausnahme Einstellungen: Offscreen zeichnet AppKit die Schalter
 grau, darum echt aufnehmen – App mit `TOKENSTATS_OPEN_SETTINGS=1` starten (Demo-Werte,
 keine Abfrage, öffnet das Fenster; nur Debug), Fenster-ID per `CGWindowListCopyWindowInfo` holen,
@@ -56,7 +66,8 @@ ist nötig, sonst lehnt Apple die App wegen `get-task-allow` ab.
 
 ## Nächster Schritt
 
-Rest von v2 (SPEC.md §8): Mitteilungen bei 50/80/90 % und bei Reset (§5).
+Rest von v2 (SPEC.md §8): Mitteilungen bei 50/80/90 % und bei Reset (§5). Danach die
+iOS-Fassung (Issue #11) auf Basis von `TokenStatsCore` und dem Widget-Stand aus Issue #10.
 
 ## Harte Randbedingungen
 
