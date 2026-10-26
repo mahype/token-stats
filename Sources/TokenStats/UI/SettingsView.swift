@@ -63,6 +63,17 @@ struct SettingsView: View {
             }
 
             Section {
+                Toggle("Stand nach iCloud übertragen", isOn: $settings.cloudSync)
+            } header: {
+                Text("iPhone")
+            } footer: {
+                Text(cloudFooter)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .disabled(!SnapshotCloud.isEntitled)
+
+            Section {
                 Toggle("Automatisch nach Updates suchen", isOn: $updater.automaticallyChecks)
                 LabeledContent("Version \(Self.version)") {
                     Button("Jetzt suchen") { updater.checkNow() }
@@ -84,6 +95,11 @@ struct SettingsView: View {
 
     private static var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+    }
+
+    private var cloudFooter: String {
+        guard SnapshotCloud.isEntitled else { return "In diesem Build nicht enthalten (keine iCloud-Berechtigung)." }
+        return "Limits und Verbrauch dieses Macs – Prozente, Reset-Zeiten, Tagessummen – in deine private iCloud-Datenbank, für die Token-Stats-App auf dem iPhone. Keine Zugangsdaten, keine Logs."
     }
 
     private var updatesFooter: String {

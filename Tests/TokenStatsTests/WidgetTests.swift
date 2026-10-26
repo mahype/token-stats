@@ -50,6 +50,18 @@ import TokenStatsCore
         #expect(all.models.map { $0.value ?? -1 } == all.models.map { $0.value ?? -1 }.sorted(by: >))
         #expect(snapshot.summary(provider: "ollama", period: .week) == nil)
     }
+
+    @Test func mergesSameModelsAcrossMachines() throws {
+        let now = Date.now
+        let machines = DemoData.machines(now: now)
+        let single = try #require(machines[0].summary(provider: "claude", period: .week))
+        let both = UsageSummary.merged(machines.compactMap { $0.summary(provider: "claude", period: .week) })
+        // Zwei Macs mit denselben Modellen: eine Zeile je Modell, Zahlen verdoppelt.
+        #expect(both.models.count == single.models.count)
+        #expect(both.models.map(\.model).sorted() == single.models.map(\.model).sorted())
+        #expect(both.total == single.total + single.total)
+        #expect(both.days.map(\.tokens) == single.days.map { $0.tokens * 2 })
+    }
 }
 
 @Suite struct WidgetLinkTests {
@@ -66,5 +78,36 @@ import TokenStatsCore
     @Test func ignoresForeignLinks() throws {
         #expect(WidgetLink.parse(try #require(URL(string: "https://example.org/usage"))) == nil)
         #expect(WidgetLink.parse(try #require(URL(string: "tokenstats://settings"))) == nil)
+    }
+}
+
+// iCloud-Datenweg (Issue #11): Datensatz und Cache, ohne Netz.
+
+@Suite struct SnapshotCloudTests {
+    @Test func recordCarriesTheSnapshot() throws {
+        let snapshot = DemoData.widgetSnapshot(now: Date(timeIntervalSince1970: 1_790_000_000), machine: "work")
+        let record = try SnapshotCloud.record(from: snapshot, machineID: "ABC")
+        #expect(record.recordID.recordName == "ABC")
+        #expect(record.recordID.zoneID == SnapshotCloud.zoneID)
+        #expect(record["machine"] as? String == "work")
+        #expect(record["version"] as? Int == WidgetSnapshot.currentVersion)
+        let restored = try #require(SnapshotCloud.snapshot(from: record))
+        #expect(restored.machine == "work")
+        #expect(restored.providers == snapshot.providers)
+        #expect(restored.usage == snapshot.usage)
+    }
+
+    @Test func cacheKeepsNewestFirst() throws {
+        let now = Date(timeIntervalSince1970: 1_790_000_000)
+        let machines = [
+            DemoData.widgetSnapshot(now: now, machine: "alt", age: 3600),
+            DemoData.widgetSnapshot(now: now, machine: "neu", age: 60),
+        ]
+        let url = FileManager.default.temporaryDirectory.appending(path: "cache-test-\(UUID().uuidString)/machines.json")
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        try SnapshotCache.write(machines, to: url)
+        let loaded = SnapshotCache.load(from: url)
+        #expect(loaded.map(\.machine) == ["neu", "alt"])
+        #expect(SnapshotCache.load(from: URL(filePath: "/nonexistent/machines.json")).isEmpty)
     }
 }

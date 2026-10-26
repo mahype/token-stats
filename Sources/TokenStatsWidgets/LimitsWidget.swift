@@ -38,12 +38,12 @@ struct LimitsTimelineProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(for configuration: LimitsConfigurationIntent, in context: Context) async -> LimitsEntry {
-        let snapshot = context.isPreview ? DemoData.widgetSnapshot(now: .now) : WidgetSnapshot.load()
+        let snapshot = context.isPreview ? DemoData.widgetSnapshot(now: .now) : WidgetSnapshot.loadForWidgets()
         return LimitsEntry(date: .now, snapshot: snapshot, provider: configuration.provider.providerID)
     }
 
     func timeline(for configuration: LimitsConfigurationIntent, in context: Context) async -> Timeline<LimitsEntry> {
-        let entry = LimitsEntry(date: .now, snapshot: WidgetSnapshot.load(), provider: configuration.provider.providerID)
+        let entry = LimitsEntry(date: .now, snapshot: WidgetSnapshot.loadForWidgets(), provider: configuration.provider.providerID)
         return Timeline(entries: [entry], policy: .never)
     }
 }
@@ -59,7 +59,7 @@ struct LimitsWidget: Widget {
         }
         .configurationDisplayName("Limits")
         .description("Die Meter eines Anbieters mit Reset-Zeit und Pace-Marke – wie im Popover.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies(WidgetFamily.limitsFamilies)
     }
 }
 
@@ -69,8 +69,18 @@ struct LimitsWidgetEntryView: View {
 
     var body: some View {
         let shown = entry.snapshot.flatMap { LimitsWidgetView.resolve($0, provider: entry.provider) }?.id
-        LimitsWidgetView(snapshot: entry.snapshot, provider: entry.provider, size: family.size, now: entry.date)
-            .widgetURL(WidgetLink.url(.init(page: .limits, provider: family.size == .large ? nil : shown)))
-            .containerBackground(.fill.tertiary, for: .widget)
+        Group {
+            #if os(iOS)
+            if family.isAccessory {
+                LockScreenLimitsView(entry: entry)
+            } else {
+                LimitsWidgetView(snapshot: entry.snapshot, provider: entry.provider, size: family.size, now: entry.date)
+            }
+            #else
+            LimitsWidgetView(snapshot: entry.snapshot, provider: entry.provider, size: family.size, now: entry.date)
+            #endif
+        }
+        .widgetURL(WidgetLink.url(.init(page: .limits, provider: family.size == .large ? nil : shown)))
+        .containerBackground(.fill.tertiary, for: .widget)
     }
 }

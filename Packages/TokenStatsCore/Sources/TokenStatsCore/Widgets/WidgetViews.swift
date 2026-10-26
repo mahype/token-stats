@@ -45,6 +45,20 @@ struct WidgetHeader: View {
     }
 }
 
+/// „work · vor 12 Min.“ – nur für Stände, die über iCloud von einem Mac kamen.
+struct MachineFooter: View {
+    let snapshot: WidgetSnapshot
+
+    var body: some View {
+        if let machine = snapshot.machine {
+            (Text(machine) + Text(" · vor ") + Text(snapshot.writtenAt, style: .relative))
+                .font(.system(size: 9.5))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+    }
+}
+
 // MARK: - Verbrauch
 
 /// Widget „Verbrauch“: Tokens und API-Vergleichswert für einen Zeitraum (Issue #10).
@@ -94,6 +108,7 @@ public struct UsageWidgetView: View {
                 case .large: large(summary, showMoney: snapshot.showMoney)
                 }
             }
+            MachineFooter(snapshot: snapshot)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
@@ -262,6 +277,7 @@ public struct LimitsWidgetView: View {
                     }
                 }
                 Spacer(minLength: 0)
+                MachineFooter(snapshot: snapshot)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         case .medium, .small:
@@ -274,6 +290,7 @@ public struct LimitsWidgetView: View {
                     noData(provider)
                 }
                 Spacer(minLength: 0)
+                MachineFooter(snapshot: snapshot)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }

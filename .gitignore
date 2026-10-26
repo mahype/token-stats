@@ -2,7 +2,10 @@
 build/
 # Wird aus project.yml erzeugt (make project)
 TokenStats.xcodeproj/
-Config/*.entitlements
+Config/TokenStats.entitlements
+Config/TokenStatsWidgets.entitlements
+Config/TokenStatsiOS.entitlements
+Config/TokenStatsWidgetsiOS.entitlements
 xcuserdata/
 # Windows-Port (dotnet)
 windows/**/bin/

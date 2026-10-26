@@ -5,6 +5,8 @@ import WidgetKit
 
 /// Gibt den Widgets den Stand (Issue #10): schreibt `widgets.json` in die App Group, sobald
 /// sich Limits, Verbrauch oder die Geld-Einstellung ändern, und lädt dann die Timelines neu.
+/// Ist „Stand nach iCloud übertragen“ an, geht derselbe Stand im selben Takt an die private
+/// CloudKit-Datenbank, für die iOS-App (Issue #11).
 ///
 /// Die Erweiterung liest nur diese Datei – keine Zugangsdaten, kein `usage.sqlite`, keine
 /// Endpunkte. Ein neuer Limit-Stand lädt sofort neu; Verbrauchsänderungen allein höchstens
@@ -17,6 +19,8 @@ final class WidgetBridge {
 
     private var lastWritten: WidgetSnapshot?
     private var lastReload: Date = .distantPast
+    private var lastPublished: WidgetSnapshot?
+    private var publishing = false
     private var pendingWrite: Task<Void, Never>?
     private var pendingReload: Task<Void, Never>?
 
@@ -58,7 +62,9 @@ final class WidgetBridge {
                 consumption.summary(provider, period).map { WidgetSnapshot.Usage(provider: provider, period: period, summary: $0) }
             }
         }
-        return WidgetSnapshot(showMoney: settings.showMoney, providers: providers, usage: usage)
+        // cloudSync wird hier gelesen, damit ein Umschalten den Stand sofort überträgt.
+        return WidgetSnapshot(machine: settings.cloudSync ? Host.current().localizedName : nil,
+                              showMoney: settings.showMoney, providers: providers, usage: usage)
     }
 
     /// Kurz sammeln: Mehrere Anbieter antworten oft innerhalb weniger Sekunden.
@@ -73,7 +79,7 @@ final class WidgetBridge {
 
     private func write(_ snapshot: WidgetSnapshot) {
         if let last = lastWritten, last.providers == snapshot.providers, last.usage == snapshot.usage,
-           last.showMoney == snapshot.showMoney {
+           last.showMoney == snapshot.showMoney, last.machine == snapshot.machine {
             return
         }
         do {
@@ -105,5 +111,23 @@ final class WidgetBridge {
         pendingReload = nil
         lastReload = .now
         WidgetCenter.shared.reloadAllTimelines()
+        publish()
+    }
+
+    /// Denselben Stand nach iCloud – nur mit Einstellung und Berechtigung, nie doppelt.
+    private func publish() {
+        guard settings.cloudSync, SnapshotCloud.isEntitled, let snapshot = lastWritten,
+              snapshot.machine != nil, snapshot != lastPublished, !publishing else { return }
+        publishing = true
+        let machineID = settings.machineID
+        Task {
+            do {
+                try await SnapshotCloud.publish(snapshot, machineID: machineID)
+                lastPublished = snapshot
+            } catch {
+                NSLog("Token Stats: iCloud-Übertragung fehlgeschlagen: \(error.localizedDescription)")
+            }
+            publishing = false
+        }
     }
 }

@@ -116,16 +116,26 @@ public enum DemoData {
     }
 
     /// Der komplette Widget-Stand mit Demo-Werten, für Vorschau und README.
-    public static func widgetSnapshot(now: Date, prices: PriceTable = DemoData.prices, showMoney: Bool = true) -> WidgetSnapshot {
+    public static func widgetSnapshot(now: Date, prices: PriceTable = DemoData.prices, showMoney: Bool = true,
+                                      machine: String? = nil, age: TimeInterval = 60) -> WidgetSnapshot {
         let snapshots = snapshots(now: now)
         let usage = usage(now: now, billingDay: 1, prices: prices.models.isEmpty ? DemoData.prices : prices)
         return WidgetSnapshot(
-            writtenAt: now.addingTimeInterval(-60),
+            writtenAt: now.addingTimeInterval(-age),
+            machine: machine,
             showMoney: showMoney,
             providers: providerNames.map { WidgetSnapshot.Provider(id: $0.id, name: $0.name, snapshot: snapshots[$0.id]) },
             usage: usage.flatMap { provider, periods in
                 periods.map { WidgetSnapshot.Usage(provider: provider, period: $0.key, summary: $0.value) }
             }
         )
+    }
+
+    /// Zwei Macs, wie sie die iOS-App aus iCloud bekäme (Issue #11).
+    public static func machines(now: Date) -> [WidgetSnapshot] {
+        [
+            widgetSnapshot(now: now, machine: "work", age: 12 * 60),
+            widgetSnapshot(now: now, machine: "MacBook Pro", age: 3 * 3600),
+        ]
     }
 }

@@ -3,6 +3,7 @@ options:
   bundleIdPrefix: de.mahype
   deploymentTarget:
     macOS: "14.0"
+    iOS: "17.0"
   createIntermediateGroups: true
 
 packages:
@@ -83,6 +84,63 @@ targets:
         ENABLE_APP_SANDBOX: YES
         SKIP_INSTALL: YES
 
+  # iOS-App (Issue #11): zeigt den Stand der Macs aus iCloud, rechnet nichts selbst.
+  # App Group hier iOS-üblich mit `group.`; der Inhalt kommt aus der privaten CloudKit-Datenbank.
+  TokenStatsiOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources/TokenStatsiOS
+    dependencies:
+      - package: TokenStatsCore
+      - target: TokenStatsWidgetsiOS
+    entitlements:
+      path: Config/TokenStatsiOS.entitlements
+      properties:
+        com.apple.security.application-groups: ["$(APP_GROUP)"]
+        com.apple.developer.icloud-container-identifiers: [iCloud.de.mahype.TokenStats]
+        com.apple.developer.icloud-services: [CloudKit]
+        aps-environment: development
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.mahype.TokenStats
+        PRODUCT_NAME: Token Stats
+        PRODUCT_MODULE_NAME: TokenStatsiOS
+        APP_GROUP: group.de.mahype.TokenStats
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Config/iOS-Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: Token Stats
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+
+  # Dieselben Widget-Quellen wie auf dem Mac, dazu Sperrbildschirm-Familien (#if os(iOS)).
+  TokenStatsWidgetsiOS:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Sources/TokenStatsWidgets
+    dependencies:
+      - package: TokenStatsCore
+    entitlements:
+      path: Config/TokenStatsWidgetsiOS.entitlements
+      properties:
+        com.apple.security.application-groups: ["$(APP_GROUP)"]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.mahype.TokenStats.Widgets
+        PRODUCT_NAME: TokenStatsWidgets
+        APP_GROUP: group.de.mahype.TokenStats
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Config/Widgets-Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: Token Stats
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+
   TokenStatsTests:
     type: bundle.unit-test
     platform: macOS
@@ -106,3 +164,7 @@ schemes:
     test:
       targets:
         - TokenStatsTests
+  TokenStatsiOS:
+    build:
+      targets:
+        TokenStatsiOS: all
