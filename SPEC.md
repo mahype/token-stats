@@ -98,7 +98,7 @@ Reset Mi 09:00                      1 Tag vorgegriffen
   schwankt. Entwürfe: https://claude.ai/artifact/5HkPZTH2jxgkE21x1gvLdi
 - Reset-Zeit als Uhrzeit bzw. Wochentag + Uhrzeit, nicht als Countdown.
 - Zeilen für Claude: Session 5 h (nur, wenn der Server sie liefert) · Woche 7 d · Opus · Sonnet.
-- Darunter Pills für Beträge und Kleinwerte: `Extra 12,40 $ / 50 $` (Währung aus der Antwort, z. B. `331,63 € / 500 €`), `Guthaben 7,10 $`,
+- Darunter Pills für Beträge und Kleinwerte: `Extra 12,40 $ / 50 $` (Währung aus der Antwort, z. B. `331,63 € / 500,00 €`), `Guthaben 7,10 $`,
   `heute 4,1 M Tokens`.
 
 ### 3.5 Seite „Verbrauch“
