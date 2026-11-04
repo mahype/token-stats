@@ -3,8 +3,12 @@
 Jede Version hat einen Abschnitt `## X.Y.Z`. `make publish` übernimmt ihn als Text für
 das GitHub-Release und für den Update-Dialog in der App.
 
-## Noch nicht veröffentlicht
+## 0.3.3
 
+- **Claude wieder abrufbar:** Anthropic liefert das Fünf-Stunden-Fenster nicht mehr mit,
+  die App meldete deshalb „Unerwartete Antwort vom Server“. Jetzt erscheinen Woche und
+  Modell-Limits auch ohne Session-Zeile. Das Extra-Guthaben steht in der Währung des
+  Kontos (etwa Euro) statt fest in Dollar. Die Korrektur gilt für macOS und Windows.
 - **Ollama wieder abrufbar:** Limits und Guthaben kommen jetzt aus `/api/balance`,
   nachdem Ollama `/api/usage` auf Nutzungsstatistiken umgestellt hat. Session- und
   Wochenlimits zeigen auch Reset-Zeiten; Guthabenpläne zeigen Monats- und Zusatzguthaben.
