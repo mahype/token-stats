@@ -93,7 +93,6 @@ public sealed partial class ClaudeProvider : IUsageProvider
     public static ProviderSnapshot Parse(byte[] data, DateTimeOffset now)
     {
         var response = JsonRead.ParseObject(data);
-        var fiveHour = response.Obj("five_hour") ?? throw ProviderException.BadResponse();
 
         const double week = 7 * 24 * 3600;
         static LimitWindow? Window(string id, string name, string note, JsonObject? source, double length)
@@ -108,13 +107,30 @@ public sealed partial class ClaudeProvider : IUsageProvider
             };
         }
 
+        // Seit 04.11.2026 fehlt `five_hour` (null): dann entfällt die Zeile „Session“.
         var windows = new[]
         {
-            Window("session", "Session", "5 h", fiveHour, 5 * 3600),
+            Window("session", "Session", "5 h", response.Obj("five_hour"), 5 * 3600),
             Window("week", "Woche", "7 d, alle Modelle", response.Obj("seven_day"), week),
             Window("opus", "Opus", "Wochenlimit", response.Obj("seven_day_opus"), week),
             Window("sonnet", "Sonnet", "Wochenlimit", response.Obj("seven_day_sonnet"), week),
         }.OfType<LimitWindow>().ToList();
+
+        // Fehlt `seven_day`, kommt die Woche aus `limits` (`weekly_all`).
+        if (windows.All(w => w.Id != "week"))
+        {
+            foreach (var limit in response.Arr("limits") ?? [])
+            {
+                if (limit.Str("kind") != "weekly_all" || limit.Num("percent") is not { } percent) continue;
+                var index = windows.Count > 0 && windows[0].Id == "session" ? 1 : 0;
+                windows.Insert(index, new LimitWindow
+                {
+                    Id = "week", Name = "Woche", ScopeNote = "7 d, alle Modelle",
+                    Percent = percent / 100, ResetsAt = JsonRead.Date(limit.Str("resets_at")), WindowLength = week,
+                });
+                break;
+            }
+        }
 
         // Neuere Antworten führen Modell-Limits zusätzlich in `limits`.
         foreach (var limit in response.Arr("limits") ?? [])
@@ -131,12 +147,17 @@ public sealed partial class ClaudeProvider : IUsageProvider
             });
         }
 
+        // Kein einziges Limit: Form unbekannt, nicht leer anzeigen.
+        if (windows.Count == 0) throw ProviderException.BadResponse();
+
         var extras = new List<ExtraValue>();
         var extra = response.Obj("extra_usage");
         if (extra.Bool("is_enabled") == true && extra.Num("monthly_limit") is { } monthly and > 0)
         {
             var used = extra.Num("used_credits") ?? 0;
-            extras.Add(new ExtraValue("extra", $"Extra {Format.Dollars(used)} / {Format.Dollars(monthly)}"));
+            var currency = extra.Str("currency");
+            int? decimals = extra.Num("decimal_places") is { } places ? (int)places : null;
+            extras.Add(new ExtraValue("extra", $"Extra {Format.Amount(used, currency, decimals)} / {Format.Amount(monthly, currency, decimals)}"));
         }
 
         return new ProviderSnapshot { Windows = windows, Extras = extras, FetchedAt = now };

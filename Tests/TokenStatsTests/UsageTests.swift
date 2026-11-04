@@ -98,6 +98,12 @@ import Testing
         #expect(Format.tokens(812_345) == "812 k")
         #expect(Format.tokens(950) == "950")
     }
+
+    @Test func amountUsesResponseCurrency() {
+        #expect(Format.amount(minor: 33163, currency: "EUR", decimals: 2) == "331,63 €")
+        #expect(Format.amount(minor: 5000, currency: nil, decimals: nil) == "50,00 $")
+        #expect(Format.amount(minor: 1200, currency: "chf", decimals: 0) == "1.200 CHF")
+    }
 }
 
 @Suite struct PeriodTests {

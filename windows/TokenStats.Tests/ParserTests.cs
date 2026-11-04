@@ -41,6 +41,43 @@ public class ClaudeParserTests
     }
 
     [Fact]
+    public void ReadsResponseWithoutFiveHourWindow()
+    {
+        // Antwortform vom 04.11.2026: `five_hour` null, Fenster in `limits`, Extra in Euro.
+        const string json = """
+            {"five_hour":null,
+             "seven_day":{"utilization":8,"resets_at":"2030-01-02T09:00:00+00:00"},
+             "seven_day_opus":null,"seven_day_sonnet":null,
+             "limits":[
+               {"kind":"weekly_all","percent":8,"resets_at":"2030-01-02T09:00:00+00:00","scope":null},
+               {"kind":"weekly_scoped","percent":0,"resets_at":"2030-01-02T09:00:00+00:00","scope":{"model":{"display_name":"Fable"}}}
+             ],
+             "extra_usage":{"is_enabled":true,"monthly_limit":50000,"used_credits":33163,"currency":"EUR","decimal_places":2}}
+            """;
+        var snapshot = ClaudeProvider.Parse(Utf8(json), DateTimeOffset.UtcNow);
+        Assert.Equal(["Woche", "Fable"], snapshot.Windows.Select(w => w.Name));
+        Assert.Equal(["Extra 331,63 € / 500,00 €"], snapshot.Extras.Select(e => e.Text));
+    }
+
+    [Fact]
+    public void WeekFallsBackToLimitsList()
+    {
+        const string json = """{"five_hour":null,"seven_day":null,"limits":[{"kind":"weekly_all","percent":30,"resets_at":"2030-01-02T09:00:00+00:00"}]}""";
+        var snapshot = ClaudeProvider.Parse(Utf8(json), DateTimeOffset.UtcNow);
+        Assert.Equal(["Woche"], snapshot.Windows.Select(w => w.Name));
+        Assert.Equal(0.3, snapshot.Windows[0].Percent);
+        Assert.Equal(7 * 24 * 3600, snapshot.Windows[0].WindowLength);
+    }
+
+    [Fact]
+    public void RejectsResponseWithoutAnyLimit()
+    {
+        const string json = """{"five_hour":null,"extra_usage":{"is_enabled":true,"monthly_limit":50000,"used_credits":100,"currency":"EUR","decimal_places":2}}""";
+        var error = Assert.Throws<ProviderException>(() => ClaudeProvider.Parse(Utf8(json), DateTimeOffset.UtcNow));
+        Assert.Equal(ProviderErrorKind.BadResponse, error.Kind);
+    }
+
+    [Fact]
     public void DisabledExtraUsageIsHidden()
     {
         const string json = """{"five_hour":{"utilization":6},"extra_usage":{"is_enabled":false,"monthly_limit":20500,"used_credits":572}}""";

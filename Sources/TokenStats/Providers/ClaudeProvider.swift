@@ -127,6 +127,8 @@ struct ClaudeProvider: UsageProvider {
             var is_enabled: Bool?
             var monthly_limit: Double?
             var used_credits: Double?
+            var currency: String?
+            var decimal_places: Int?
         }
         var five_hour: Window?
         var seven_day: Window?
@@ -137,8 +139,7 @@ struct ClaudeProvider: UsageProvider {
     }
 
     static func parse(_ data: Data, now: Date = .now) throws -> ProviderSnapshot {
-        guard let response = try? JSONDecoder().decode(Response.self, from: data),
-              let fiveHour = response.five_hour
+        guard let response = try? JSONDecoder().decode(Response.self, from: data)
         else { throw ProviderError.badResponse }
 
         let week: TimeInterval = 7 * 24 * 3600
@@ -152,12 +153,24 @@ struct ClaudeProvider: UsageProvider {
             )
         }
 
+        // Seit 04.11.2026 fehlt `five_hour` (null): dann entfällt die Zeile „Session“.
         var windows = [
-            window("session", "Session", "5 h", fiveHour, length: 5 * 3600),
+            window("session", "Session", "5 h", response.five_hour, length: 5 * 3600),
             window("week", "Woche", "7 d, alle Modelle", response.seven_day, length: week),
             window("opus", "Opus", "Wochenlimit", response.seven_day_opus, length: week),
             window("sonnet", "Sonnet", "Wochenlimit", response.seven_day_sonnet, length: week),
         ].compactMap { $0 }
+
+        // Fehlt `seven_day`, kommt die Woche aus `limits` (`weekly_all`).
+        if !windows.contains(where: { $0.id == "week" }),
+           let all = response.limits?.first(where: { $0.kind == "weekly_all" && $0.percent != nil }),
+           let percent = all.percent {
+            let index = windows.firstIndex { $0.id != "session" } ?? windows.endIndex
+            windows.insert(LimitWindow(
+                id: "week", name: "Woche", scopeNote: "7 d, alle Modelle",
+                percent: percent / 100, resetsAt: all.resets_at.flatMap(parseDate), windowLength: week
+            ), at: index)
+        }
 
         // Neuere Antworten führen Modell-Limits zusätzlich in `limits`.
         for limit in response.limits ?? [] where limit.kind == "weekly_scoped" {
@@ -171,11 +184,17 @@ struct ClaudeProvider: UsageProvider {
             ))
         }
 
+        // Kein einziges Limit: Form unbekannt, nicht leer anzeigen.
+        guard !windows.isEmpty else { throw ProviderError.badResponse }
+
         var extras: [ExtraValue] = []
         if let extra = response.extra_usage, extra.is_enabled == true,
            let limit = extra.monthly_limit, limit > 0 {
             let used = extra.used_credits ?? 0
-            extras.append(ExtraValue(id: "extra", text: "Extra \(Format.dollars(cents: used)) / \(Format.dollars(cents: limit))"))
+            func text(_ minor: Double) -> String {
+                Format.amount(minor: minor, currency: extra.currency, decimals: extra.decimal_places)
+            }
+            extras.append(ExtraValue(id: "extra", text: "Extra \(text(used)) / \(text(limit))"))
         }
 
         return ProviderSnapshot(account: nil, windows: windows, extras: extras, fetchedAt: now)

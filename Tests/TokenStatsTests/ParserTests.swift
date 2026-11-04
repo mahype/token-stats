@@ -44,6 +44,36 @@ import Testing
         }
     }
 
+    @Test func readsResponseWithoutFiveHourWindow() throws {
+        // Antwortform vom 04.11.2026: `five_hour` null, Fenster in `limits`, Extra in Euro.
+        let json = """
+        {"five_hour":null,
+         "seven_day":{"utilization":8,"resets_at":"2030-01-02T09:00:00+00:00"},
+         "seven_day_opus":null,"seven_day_sonnet":null,
+         "limits":[
+           {"kind":"weekly_all","percent":8,"resets_at":"2030-01-02T09:00:00+00:00","scope":null},
+           {"kind":"weekly_scoped","percent":0,"resets_at":"2030-01-02T09:00:00+00:00","scope":{"model":{"display_name":"Fable"}}}
+         ],
+         "extra_usage":{"is_enabled":true,"monthly_limit":50000,"used_credits":33163,"currency":"EUR","decimal_places":2}}
+        """
+        let snapshot = try ClaudeProvider.parse(Data(json.utf8))
+        #expect(snapshot.windows.map(\.name) == ["Woche", "Fable"])
+        #expect(snapshot.extras.map(\.text) == ["Extra 331,63 € / 500,00 €"])
+    }
+
+    @Test func weekFallsBackToLimitsList() throws {
+        let json = #"{"five_hour":null,"seven_day":null,"limits":[{"kind":"weekly_all","percent":30,"resets_at":"2030-01-02T09:00:00+00:00"}]}"#
+        let snapshot = try ClaudeProvider.parse(Data(json.utf8))
+        #expect(snapshot.windows.map(\.name) == ["Woche"])
+        #expect(snapshot.windows[0].percent == 0.3)
+        #expect(snapshot.windows[0].windowLength == TimeInterval(7 * 24 * 3600))
+    }
+
+    @Test func rejectsResponseWithoutAnyLimit() {
+        let json = #"{"five_hour":null,"extra_usage":{"is_enabled":true,"monthly_limit":50000,"used_credits":100,"currency":"EUR","decimal_places":2}}"#
+        #expect(throws: ProviderError.badResponse) { try ClaudeProvider.parse(Data(json.utf8)) }
+    }
+
     @Test func disabledExtraUsageIsHidden() throws {
         let json = #"{"five_hour":{"utilization":6},"extra_usage":{"is_enabled":false,"monthly_limit":20500,"used_credits":572}}"#
         #expect(try ClaudeProvider.parse(Data(json.utf8)).extras.isEmpty)
