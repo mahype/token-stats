@@ -1,0 +1,19 @@
+{
+  "projekt": {
+    "nummer": 4,
+    "owner": "mahype",
+    "projectId": "PVT_kwHOAAogkc4BqLlq",
+    "status": {
+      "feldId": "PVTSSF_lAHOAAogkc4BqLlqzhoj0RE",
+      "optionen": {
+        "Todo": "f75ad846",
+        "Planning": "7fdc05e9",
+        "In Progress": "47fc9ee4",
+        "In Review": "3c2c5b10",
+        "Done": "98236657"
+      }
+    },
+    "needsFeedbackFrom": null
+  },
+  "typen": null
+}
