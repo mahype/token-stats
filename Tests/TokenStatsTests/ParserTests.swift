@@ -142,7 +142,7 @@ import Testing
     }
 }
 
-// Antwortformen live geprüft am 05.10.2026 (Ollama 0.34.4, Plan Pro).
+// Balance/Usage live geprüft am 13.10.2026 (Plan Pro), Guthabenplan aus der API-Dokumentation.
 // Die Schlüssel sind Wegwerf-Testschlüssel, mit ssh-keygen nur für diese Tests erzeugt.
 @Suite struct OllamaParserTests {
     static let testKey = """
@@ -214,6 +214,76 @@ import Testing
         #expect(throws: ProviderError.badResponse) {
             try OllamaProvider.parseUsage(Data(#"{"activity":{"cost":"0"}}"#.utf8))
         }
+    }
+
+    @Test func parsesBalanceWithLegacyLimitsAndResets() throws {
+        let json = #"{"included":{"session":{"remaining_percent":75,"resets_at":"2026-10-13T09:00:00Z"},"weekly":{"remaining_percent":40,"resets_at":"2026-10-19T00:00:00.123Z"}},"purchased":{"balance_usd":25}}"#
+        let now = Date(timeIntervalSince1970: 1_790_000_000)
+        let snapshot = try OllamaProvider.parseBalance(Data(json.utf8), now: now)
+        #expect(snapshot.windows.map(\.name) == ["Session", "Woche"])
+        #expect(snapshot.windows.map(\.percent) == [0.25, 0.6])
+        #expect(snapshot.windows.map(\.windowLength) == [18_000.0, 604_800.0])
+        #expect(snapshot.windows[0].resetsAt == ISO8601DateFormatter().date(from: "2026-10-13T09:00:00Z"))
+        #expect(try #require(snapshot.windows[1].resetsAt).timeIntervalSince1970 == 1_792_368_000.123)
+        #expect(snapshot.extras.map(\.text) == ["Zusatzguthaben 25,00 $"])
+        #expect(snapshot.fetchedAt == now)
+    }
+
+    @Test func parsesIncludedAndPurchasedCredits() throws {
+        let json = #"{"included":{"balance_usd":72.5,"allowance_usd":100,"period":{"from":"2026-09-15T09:30:00Z","until":"2026-10-15T09:30:00Z"}},"purchased":{"balance_usd":25}}"#
+        let snapshot = try OllamaProvider.parseBalance(Data(json.utf8))
+        let month = try #require(snapshot.windows.first)
+        #expect(month.id == "monthly")
+        #expect(abs(month.percent - 0.275) < 0.000001)
+        #expect(month.resetsAt == ISO8601DateFormatter().date(from: "2026-10-15T09:30:00Z"))
+        #expect(month.windowLength == nil, "Abo-Monate haben keine feste Länge")
+        #expect(snapshot.extras.map(\.text) == ["Abo-Guthaben 72,50 $", "Zusatzguthaben 25,00 $"])
+    }
+
+    @Test func zeroAllowanceDoesNotInventALimit() throws {
+        let snapshot = try OllamaProvider.parseBalance(Data(#"{"included":{"balance_usd":0,"allowance_usd":0},"purchased":{"balance_usd":0}}"#.utf8))
+        #expect(snapshot.windows.isEmpty)
+        #expect(snapshot.extras.map(\.text) == ["Abo-Guthaben 0,00 $", "Zusatzguthaben 0,00 $"])
+    }
+
+    @Test func parsesFullyUsedAndUnusedLimitsWithoutReset() throws {
+        let snapshot = try OllamaProvider.parseBalance(Data(#"{"included":{"session":{"remaining_percent":0},"weekly":{"remaining_percent":100}}}"#.utf8))
+        #expect(snapshot.windows.map(\.percent) == [1, 0])
+        #expect(snapshot.windows.allSatisfy { $0.resetsAt == nil })
+    }
+
+    @Test(arguments: [#"{}"#, #"{"included":{}}"#, #"{"included":{"session":{"remaining_percent":101}}}"#, #"{"included":{"weekly":{"remaining_percent":-1}}}"#, #"{"totals":{"request_count":15}}"#, "<html>Sign in</html>"])
+    func rejectsInvalidBalance(json: String) {
+        #expect(throws: ProviderError.badResponse) { try OllamaProvider.parseBalance(Data(json.utf8)) }
+    }
+
+    @Test func parsesUsageTotalsWithoutLimits() throws {
+        let json = #"{"range":"7d","scope":"self","totals":{"request_count":15,"usage_usd":0.01718,"input_tokens":106000,"cached_input_tokens":46000,"output_tokens":13600},"buckets":[]}"#
+        let snapshot = try OllamaProvider.parseUsage(Data(json.utf8))
+        #expect(snapshot.windows.isEmpty)
+        #expect(snapshot.extras.map(\.text) == [
+            "15 Anfragen / 7 Tage + heute", "Verbrauch 0,02 $ / 7 Tage + heute",
+            "Eingabe 106 k Tokens / 7 Tage + heute", "Cache-Lesen 46 k Tokens / 7 Tage + heute",
+            "Ausgabe 14 k Tokens / 7 Tage + heute",
+        ])
+    }
+
+    @Test func legacyUsageTotalsOmitCostAndTokens() throws {
+        let snapshot = try OllamaProvider.parseUsage(Data(#"{"range":"7d","totals":{"request_count":1239},"buckets":[]}"#.utf8))
+        #expect(snapshot.windows.isEmpty)
+        #expect(snapshot.extras.map(\.text) == ["1239 Anfragen / 7 Tage + heute"])
+    }
+
+    @Test(arguments: ["24h", "7d", "30d"])
+    func acceptsZeroRequests(range: String) throws {
+        let snapshot = try OllamaProvider.parseUsage(Data("{\"range\":\"\(range)\",\"totals\":{\"request_count\":0}}".utf8))
+        #expect(snapshot.extras.count == 1)
+        #expect(snapshot.extras[0].text.hasPrefix("0 Anfragen / "))
+    }
+
+    @Test(arguments: [#"{"range":"7d","totals":{}}"#, #"{"range":"7d","totals":{"request_count":-1}}"#, #"{"range":"unknown","totals":{"request_count":0}}"#])
+    func rejectsInvalidUsageTotals(json: String) {
+        #expect(throws: ProviderError.badResponse) { try OllamaProvider.parseUsage(Data(json.utf8)) }
     }
 
     @Test func readsPlan() {

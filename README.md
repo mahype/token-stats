@@ -118,7 +118,7 @@ Die Einstellungen – Anzeige, Stichtag des Abos und Abfrageintervall:
 | **Claude Code** | Session 5 h · Woche · Modell-Limits (Opus, Sonnet …) · Extra-Verbrauch | ✅ | v1 / v2 |
 | **Codex** | Session 5 h · Woche · Code-Review · Credits | ✅ | v1 / v2 |
 | **Antigravity** (Google) | Wochenlimit Gemini · Wochenlimit Claude & GPT · Plan (z. B. Google AI Plus) | – | v3 |
-| **Ollama Cloud** | Session 5 h · Woche · Monat (je nach Plan) · Anfragen je Modell · Kosten über den Plan | – | v3 |
+| **Ollama Cloud** | Session 5 h · Woche mit Reset oder Monatsguthaben (je nach Plan) · Zusatzguthaben · Anfragen, ggf. Tokens und Verbrauchsbetrag | – | v3 |
 | GitHub Copilot, Cursor | – | – | geplant (v3) |
 | Prepaid (OpenRouter, DeepSeek, Moonshot, Fireworks) | echtes Restguthaben | – | geplant (v3) |
 
@@ -214,7 +214,7 @@ im Browser oder in einer Desktop-App verbrauchst, fehlt dort.
 | Einstellungen | UserDefaults `de.mahype.TokenStats` |
 | Claude-Kontingent | `api.anthropic.com/api/oauth/usage` |
 | Codex-Kontingent | `chatgpt.com/backend-api/wham/usage` |
-| Ollama-Kontingent und Plan | `ollama.com/api/usage` und `ollama.com/api/me` |
+| Ollama-Kontingent, Statistik und Plan | `ollama.com/api/balance`, `ollama.com/api/usage` und `ollama.com/api/me` |
 | Antigravity-Kontingent und Plan | `daily-cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary` und `:loadCodeAssist` |
 | Update-Prüfung (täglich, abschaltbar) | `mahype.github.io/token-stats/appcast.xml`, Download von `github.com` |
 

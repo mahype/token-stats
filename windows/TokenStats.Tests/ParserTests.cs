@@ -223,7 +223,7 @@ public class AntigravityParserTests
     }
 }
 
-// Antwortformen live geprüft am 05.10.2026 (Ollama 0.34.4, Plan Pro).
+// Balance/Usage live geprüft am 13.10.2026 (Plan Pro), Guthabenplan aus der API-Dokumentation.
 // Die Schlüssel sind Wegwerf-Testschlüssel, mit ssh-keygen nur für diese Tests erzeugt – dieselben wie in Tests/TokenStatsTests.
 public class OllamaParserTests
 {
@@ -307,6 +307,102 @@ public class OllamaParserTests
     public void RejectsMissingLimits()
     {
         var error = Assert.Throws<ProviderException>(() => OllamaProvider.ParseUsage(Utf8("""{"activity":{"cost":"0"}}"""), DateTimeOffset.UtcNow));
+        Assert.Equal(ProviderErrorKind.BadResponse, error.Kind);
+    }
+
+    [Fact]
+    public void ParsesBalanceWithLegacyLimitsAndResets()
+    {
+        const string json = """{"included":{"session":{"remaining_percent":75,"resets_at":"2026-10-13T09:00:00Z"},"weekly":{"remaining_percent":40,"resets_at":"2026-10-19T00:00:00.123Z"}},"purchased":{"balance_usd":25}}""";
+        var now = DateTimeOffset.FromUnixTimeSeconds(1_790_000_000);
+        var snapshot = OllamaProvider.ParseBalance(Utf8(json), now);
+        Assert.Equal(["Session", "Woche"], snapshot.Windows.Select(w => w.Name));
+        Assert.Equal([0.25, 0.6], snapshot.Windows.Select(w => w.Percent));
+        Assert.Equal([5 * 3600.0, 7 * 24 * 3600.0], snapshot.Windows.Select(w => w.WindowLength));
+        Assert.Equal(JsonRead.Date("2026-10-13T09:00:00Z"), snapshot.Windows[0].ResetsAt);
+        Assert.Equal(JsonRead.Date("2026-10-19T00:00:00.123Z"), snapshot.Windows[1].ResetsAt);
+        Assert.Equal(["Zusatzguthaben 25,00 $"], snapshot.Extras.Select(e => e.Text));
+        Assert.Equal(now, snapshot.FetchedAt);
+    }
+
+    [Fact]
+    public void ParsesIncludedAndPurchasedCredits()
+    {
+        const string json = """{"included":{"balance_usd":72.5,"allowance_usd":100,"period":{"from":"2026-09-15T09:30:00Z","until":"2026-10-15T09:30:00Z"}},"purchased":{"balance_usd":25}}""";
+        var snapshot = OllamaProvider.ParseBalance(Utf8(json), DateTimeOffset.UtcNow);
+        var month = Assert.Single(snapshot.Windows);
+        Assert.Equal("monthly", month.Id);
+        Assert.Equal(0.275, month.Percent, 6);
+        Assert.Equal(JsonRead.Date("2026-10-15T09:30:00Z"), month.ResetsAt);
+        Assert.Null(month.WindowLength);
+        Assert.Equal(["Abo-Guthaben 72,50 $", "Zusatzguthaben 25,00 $"], snapshot.Extras.Select(e => e.Text));
+    }
+
+    [Fact]
+    public void ZeroAllowanceDoesNotInventALimit()
+    {
+        var snapshot = OllamaProvider.ParseBalance(Utf8("""{"included":{"balance_usd":0,"allowance_usd":0},"purchased":{"balance_usd":0}}"""), DateTimeOffset.UtcNow);
+        Assert.Empty(snapshot.Windows);
+        Assert.Equal(["Abo-Guthaben 0,00 $", "Zusatzguthaben 0,00 $"], snapshot.Extras.Select(e => e.Text));
+    }
+
+    [Fact]
+    public void ParsesFullyUsedAndUnusedLimitsWithoutReset()
+    {
+        var snapshot = OllamaProvider.ParseBalance(Utf8("""{"included":{"session":{"remaining_percent":0},"weekly":{"remaining_percent":100}}}"""), DateTimeOffset.UtcNow);
+        Assert.Equal([1.0, 0.0], snapshot.Windows.Select(w => w.Percent));
+        Assert.All(snapshot.Windows, window => Assert.Null(window.ResetsAt));
+    }
+
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("""{"included":{}}""")]
+    [InlineData("""{"included":{"session":{"remaining_percent":101}}}""")]
+    [InlineData("""{"included":{"weekly":{"remaining_percent":-1}}}""")]
+    [InlineData("""{"totals":{"request_count":15}}""")]
+    [InlineData("<html>Sign in</html>")]
+    public void RejectsInvalidBalance(string json)
+    {
+        var error = Assert.Throws<ProviderException>(() => OllamaProvider.ParseBalance(Utf8(json), DateTimeOffset.UtcNow));
+        Assert.Equal(ProviderErrorKind.BadResponse, error.Kind);
+    }
+
+    [Fact]
+    public void ParsesUsageTotalsWithoutLimits()
+    {
+        const string json = """{"range":"7d","scope":"self","totals":{"request_count":15,"usage_usd":0.01718,"input_tokens":106000,"cached_input_tokens":46000,"output_tokens":13600},"buckets":[]}""";
+        var snapshot = OllamaProvider.ParseUsage(Utf8(json), DateTimeOffset.UtcNow);
+        Assert.Empty(snapshot.Windows);
+        Assert.Equal(["15 Anfragen / 7 Tage + heute", "Verbrauch 0,02 $ / 7 Tage + heute",
+                      "Eingabe 106 k Tokens / 7 Tage + heute", "Cache-Lesen 46 k Tokens / 7 Tage + heute",
+                      "Ausgabe 14 k Tokens / 7 Tage + heute"], snapshot.Extras.Select(e => e.Text));
+    }
+
+    [Fact]
+    public void LegacyUsageTotalsOmitCostAndTokens()
+    {
+        var snapshot = OllamaProvider.ParseUsage(Utf8("""{"range":"7d","totals":{"request_count":1239},"buckets":[]}"""), DateTimeOffset.UtcNow);
+        Assert.Empty(snapshot.Windows);
+        Assert.Equal(["1239 Anfragen / 7 Tage + heute"], snapshot.Extras.Select(e => e.Text));
+    }
+
+    [Theory]
+    [InlineData("24h")]
+    [InlineData("7d")]
+    [InlineData("30d")]
+    public void AcceptsZeroRequests(string range)
+    {
+        var snapshot = OllamaProvider.ParseUsage(Utf8($$$"""{"range":"{{{range}}}","totals":{"request_count":0}}"""), DateTimeOffset.UtcNow);
+        Assert.StartsWith("0 Anfragen / ", Assert.Single(snapshot.Extras).Text);
+    }
+
+    [Theory]
+    [InlineData("""{"range":"7d","totals":{}}""")]
+    [InlineData("""{"range":"7d","totals":{"request_count":-1}}""")]
+    [InlineData("""{"range":"unknown","totals":{"request_count":0}}""")]
+    public void RejectsInvalidUsageTotals(string json)
+    {
+        var error = Assert.Throws<ProviderException>(() => OllamaProvider.ParseUsage(Utf8(json), DateTimeOffset.UtcNow));
         Assert.Equal(ProviderErrorKind.BadResponse, error.Kind);
     }
 

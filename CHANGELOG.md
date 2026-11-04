@@ -3,6 +3,14 @@
 Jede Version hat einen Abschnitt `## X.Y.Z`. `make publish` übernimmt ihn als Text für
 das GitHub-Release und für den Update-Dialog in der App.
 
+## Noch nicht veröffentlicht
+
+- **Ollama wieder abrufbar:** Limits und Guthaben kommen jetzt aus `/api/balance`,
+  nachdem Ollama `/api/usage` auf Nutzungsstatistiken umgestellt hat. Session- und
+  Wochenlimits zeigen auch Reset-Zeiten; Guthabenpläne zeigen Monats- und Zusatzguthaben.
+  Fehler beim ergänzenden Abruf von Statistik oder Plan lassen die Limits sichtbar.
+  Die Korrektur gilt für macOS und Windows.
+
 ## 0.3.2
 
 - **Preistabelle:** Claude Haiku 5.5 ist neu. Bei Claude Sonnet 5.5 kosten Cache-Treffer
