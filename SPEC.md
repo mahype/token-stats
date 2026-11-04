@@ -97,8 +97,8 @@ Reset Mi 09:00                      1 Tag vorgegriffen
   Hochrechnung („leer ab Mo 20 Uhr“) wurde verworfen, weil sie kurz nach dem Reset stark
   schwankt. Entwürfe: https://claude.ai/artifact/5HkPZTH2jxgkE21x1gvLdi
 - Reset-Zeit als Uhrzeit bzw. Wochentag + Uhrzeit, nicht als Countdown.
-- Zeilen für Claude: Session 5 h · Woche 7 d · Opus · Sonnet.
-- Darunter Pills für Beträge und Kleinwerte: `Extra 12,40 $ / 50 $`, `Guthaben 7,10 $`,
+- Zeilen für Claude: Session 5 h (nur, wenn der Server sie liefert) · Woche 7 d · Opus · Sonnet.
+- Darunter Pills für Beträge und Kleinwerte: `Extra 12,40 $ / 50 $` (Währung aus der Antwort, z. B. `331,63 € / 500 €`), `Guthaben 7,10 $`,
   `heute 4,1 M Tokens`.
 
 ### 3.5 Seite „Verbrauch“
@@ -203,7 +203,13 @@ Auf dem Zielrechner bereits vorhanden: `~/.claude`, `~/.codex`, `~/.gemini`,
     `five_hour`/`seven_day`/`seven_day_opus`/`seven_day_sonnet` je `{utilization 0–100,
     resets_at ISO}`, zusätzlich `limits[]` (`kind: weekly_scoped`,
     `scope.model.display_name`, z. B. „Fable“), `extra_usage {is_enabled, monthly_limit,
-    used_credits}` in Cent.
+    used_credits, currency, decimal_places}` in der kleinsten Einheit (Cent).
+    Stand 04.11.2026: `five_hour` ist `null`, `seven_day` weiter gefüllt, `limits[]`
+    enthält zusätzlich `kind: weekly_all` (`scope: null`) mit `percent` und `resets_at`;
+    `extra_usage` nennt `currency: "EUR"` und `decimal_places: 2`. Der Parser liest alle
+    Felder tolerant: Ohne `five_hour` entfällt die Zeile „Session“, fehlt `seven_day`,
+    kommt die Woche aus `weekly_all`; nur eine Antwort ganz ohne Limit ist `badResponse`.
+    Ohne `currency` (ältere Antworten) gilt Dollar.
   - Codex: `GET https://chatgpt.com/backend-api/wham/usage`, Header
     `Authorization: Bearer <tokens.access_token>`, `chatgpt-account-id: <tokens.account_id>`
     aus `~/.codex/auth.json`. Antwort: `rate_limit.primary_window`/`secondary_window` je
