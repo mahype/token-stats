@@ -6,3 +6,4 @@ xcuserdata/
 # Windows-Port (dotnet)
 windows/**/bin/
 windows/**/obj/
+.tbd/
