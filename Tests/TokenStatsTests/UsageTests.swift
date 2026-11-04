@@ -134,3 +134,43 @@ import Testing
         #expect(summary.hasUnpriced == false)
     }
 }
+
+@Suite struct UsageCSVTests {
+    var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Europe/Berlin")!
+        return calendar
+    }
+
+    var summary: UsageSummary {
+        let from = calendar.date(from: DateComponents(year: 2026, month: 9, day: 27))!
+        let through = calendar.date(from: DateComponents(year: 2026, month: 9, day: 28))!
+        let rows = [
+            UsageLedger.Row(day: "2026-09-28", model: "claude-opus-5-5",
+                            counts: TokenCounts(input: 1_000_000, output: 100_000, cacheWrite5m: 50_000, cacheWrite1h: 50_000, cacheRead: 2_000_000)),
+            UsageLedger.Row(day: "2026-09-27", model: "unbekannt", counts: TokenCounts(input: 10, output: 5)),
+        ]
+        return UsageSummary.build(rows: rows, from: from, through: through, prices: PricingTests.table, calendar: calendar)
+    }
+
+    @Test func rendersModelsTotalAndDays() {
+        let lines = UsageCSV.render(summary, showMoney: true, calendar: calendar).split(separator: "\n", omittingEmptySubsequences: false)
+        #expect(lines[0] == "Modell;Modell-ID;Input;Output;Cache-Schreiben;Cache-Lesen;Tokens;API-Vergleichswert (USD)")
+        // 4 + 2 + 0,25 + 0,4 + 0,4 = 7,05 $ bei den Testpreisen (Input, Output, Cache 5m, Cache 1h, Cache-Lesen)
+        #expect(lines[1] == "Opus 5.5;claude-opus-5-5;1000000;100000;100000;2000000;3200000;7,05")
+        #expect(lines[2] == "unbekannt;unbekannt;10;5;0;0;15;", "Modell ohne Preis: leeres Feld statt 0")
+        #expect(lines[3] == "Gesamt;;1000010;100005;100000;2000000;3200015;7,05")
+        #expect(lines[4] == "")
+        #expect(lines[5] == "Datum;Tokens")
+        #expect(lines[6] == "2026-09-27;15")
+        #expect(lines[7] == "2026-09-28;3200000")
+        #expect(lines.last == "", "endet mit Zeilenumbruch")
+    }
+
+    @Test func omitsMoneyColumnWhenDisabled() {
+        let csv = UsageCSV.render(summary, showMoney: false, calendar: calendar)
+        #expect(!csv.contains("API-Vergleichswert"))
+        #expect(csv.hasPrefix("Modell;Modell-ID;Input;Output;Cache-Schreiben;Cache-Lesen;Tokens\n"))
+        #expect(csv.contains("\nGesamt;;1000010;100005;100000;2000000;3200015\n"))
+    }
+}

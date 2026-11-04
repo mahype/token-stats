@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Seite „Verbrauch“: Tokens und API-Vergleichswert je Zeitraum (SPEC §3.5).
@@ -8,6 +9,7 @@ struct UsageView: View {
     let subscription: Int?
 
     @State private var period: UsagePeriod = .week
+    @State private var copied = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -49,8 +51,41 @@ struct UsageView: View {
                     .buttonStyle(.plain)
                     .font(.system(size: 11.5, weight: option == period ? .bold : .regular))
                     .foregroundStyle(option == period ? .primary : .secondary)
+                    .fixedSize()
+            }
+            Spacer()
+            if let summary = consumption.summary(providerID, period), !summary.total.isZero {
+                copyButton(summary)
             }
         }
+    }
+
+    /// Kopiert den Zeitraum als CSV – je Modell und je Tag – in die Zwischenablage,
+    /// für Tabellenkalkulation oder Abrechnung.
+    private func copyButton(_ summary: UsageSummary) -> some View {
+        Button {
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(UsageCSV.render(summary, showMoney: showMoney), forType: .string)
+            copied = true
+            Task {
+                try? await Task.sleep(for: .seconds(1.5))
+                copied = false
+            }
+        } label: {
+            // Beide Beschriftungen liegen übereinander, damit der Button beim Wechsel
+            // auf „Kopiert“ nicht breiter wird und die Zeitraum-Labels verschiebt.
+            ZStack(alignment: .trailing) {
+                Label("Kopiert", systemImage: "checkmark").opacity(copied ? 1 : 0)
+                Label("CSV", systemImage: "doc.on.doc").opacity(copied ? 0 : 1)
+            }
+            .font(.system(size: 10.5))
+            .foregroundStyle(.secondary)
+            .fixedSize()
+        }
+        .buttonStyle(.plain)
+        .help("Verbrauch dieses Zeitraums als CSV kopieren")
+        .accessibilityLabel("Verbrauch als CSV kopieren")
     }
 
     @ViewBuilder
