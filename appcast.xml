@@ -5,6 +5,18 @@
     <link>https://mahype.github.io/token-stats/appcast.xml</link>
     <language>de</language>
     <item>
+      <title>Version 0.3.3</title>
+      <pubDate>Thu, 05 Nov 2026 08:20:40 GMT</pubDate>
+      <sparkle:version>0.3.3</sparkle:version>
+      <sparkle:shortVersionString>0.3.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description>&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Claude wieder abrufbar:&lt;/strong&gt; Anthropic liefert das Fünf-Stunden-Fenster nicht mehr mit, die App meldete deshalb „Unerwartete Antwort vom Server“. Jetzt erscheinen Woche und Modell-Limits auch ohne Session-Zeile. Das Extra-Guthaben steht in der Währung des Kontos (etwa Euro) statt fest in Dollar. Die Korrektur gilt für macOS und Windows.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Ollama wieder abrufbar:&lt;/strong&gt; Limits und Guthaben kommen jetzt aus &lt;code&gt;/api/balance&lt;/code&gt;, nachdem Ollama &lt;code&gt;/api/usage&lt;/code&gt; auf Nutzungsstatistiken umgestellt hat. Session- und Wochenlimits zeigen auch Reset-Zeiten; Guthabenpläne zeigen Monats- und Zusatzguthaben. Fehler beim ergänzenden Abruf von Statistik oder Plan lassen die Limits sichtbar. Die Korrektur gilt für macOS und Windows.&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <enclosure url="https://github.com/mahype/token-stats/releases/download/v0.3.3/Token-Stats-0.3.3.dmg" length="2236471" type="application/octet-stream" sparkle:edSignature="JsBiVQhGVKdhO0RqsnKqJWiqI3hqLuj6O0P677/BGHKAp81CMb2IhKH48aTOjIpcL+YMCTZ84MYqfUVBrdUJBw==" />
+    </item>
+    <item>
       <title>Version 0.3.2</title>
       <pubDate>Fri, 09 Oct 2026 08:51:13 GMT</pubDate>
       <sparkle:version>0.3.2</sparkle:version>
