@@ -185,6 +185,11 @@ Noch nicht veröffentlicht: ein Plasma-6-Widget und ein GTK-Tray-Widget sind in
 Entwicklung ([PR #14](https://github.com/mahype/token-stats/pull/14)). Sobald sie
 gemergt sind, steht Linux hier gleichrangig neben macOS und Windows.
 
+### Linux
+
+Tray-Widgets für Linux (natives Plasma-6-Widget und eine GTK3-Variante für andere Desktops, nur Claude Code)
+liegen in [`linux/`](linux/README.md) – gleiche Datenquellen, Rechnung und Preistabelle.
+
 ## Entfernen
 
 Unter macOS: **Bei Anmeldung starten** ausschalten, die App beenden, dann:

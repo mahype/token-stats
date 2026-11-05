@@ -1,0 +1,16 @@
+{
+    "KPlugin": {
+        "Id": "org.tokenstats.claude",
+        "Name": "Token Stats",
+        "Description": "Claude Code limits and token usage with API comparison value",
+        "Icon": "office-chart-ring",
+        "Category": "System Information",
+        "License": "MIT",
+        "Version": "0.1",
+        "Authors": [{ "Name": "iappwebdev" }]
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-NotificationArea": "true",
+    "X-Plasma-NotificationAreaCategory": "ApplicationStatus"
+}
