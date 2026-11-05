@@ -175,8 +175,8 @@ auch wenn `xcode-select` auf die Command Line Tools zeigt.
 ### Windows
 
 Tray-App für Windows 10/11 (nativ ARM64, auch x64) in [`windows/`](windows/README.md) –
-gleiche Datenquellen und Rechnung, gebaut mit .NET 10. Installation und Bauanleitung
-stehen dort.
+gleiche Datenquellen und Rechnung, gebaut mit .NET 10. Die Bauanleitung
+steht dort.
 
 ### Linux (in Arbeit)
 
