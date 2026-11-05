@@ -1,6 +1,8 @@
 # Token Stats
 
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-black.svg?logo=apple)](#voraussetzungen)
+[![Windows 10/11](https://img.shields.io/badge/Windows-10%2F11-0078D4.svg?logo=windows&logoColor=white)](#windows)
+[![Linux: in Arbeit](https://img.shields.io/badge/Linux-in%20Arbeit-orange.svg?logo=linux&logoColor=white)](#linux-in-arbeit)
 [![Swift 6](https://img.shields.io/badge/Swift-6-F05138.svg?logo=swift&logoColor=white)](https://www.swift.org)
 [![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-0A84FF.svg)](https://developer.apple.com/xcode/swiftui/)
 [![Release](https://img.shields.io/github/v/release/mahype/token-stats?label=release&color=blue)](https://github.com/mahype/token-stats/releases/latest)
@@ -12,14 +14,15 @@
 [![Keine Abhängigkeiten](https://img.shields.io/badge/Abh%C3%A4ngigkeiten-keine-brightgreen.svg)](#voraussetzungen)
 [![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-blue.svg)](LICENSE)
 
-Menüleisten-App für macOS, die die Kontingente deiner KI-Coding-Abos anzeigt:
+Menüleisten- bzw. Tray-App für macOS und Windows (Linux in Arbeit), die die Kontingente
+deiner KI-Coding-Abos anzeigt:
 Session-Fenster, Wochenlimit, Modell-Limits und Extra-Verbrauch von Claude Code,
 Codex, Antigravity (Google) und Ollama Cloud. Dazu eine Verbrauchsseite mit Tokenzahlen je Tag und Modell und dem
 **API-Vergleichswert** – was derselbe Verbrauch über die API gekostet hätte.
 
 Die App beantwortet ohne Browser und ohne CLI die Frage **„Darf ich noch?“**. Sie nutzt
 die Anmeldungen, die Claude Code, Codex, die Antigravity-CLI und Ollama ohnehin auf
-deinem Mac haben. Kein Konto,
+deinem Rechner haben. Kein Konto,
 keine Cloud, keine Telemetrie.
 
 <p align="center">
@@ -130,13 +133,16 @@ Oberfläche bleibt beim Hinzufügen unberührt.
 
 ## Voraussetzungen
 
-- macOS 14 (Sonoma) oder neuer, Apple Silicon oder Intel
+- macOS 14 (Sonoma) oder neuer, Apple Silicon oder Intel – oder Windows 10/11
+  (siehe [Windows](#windows))
 - Claude Code, Codex, die Antigravity-CLI (`agy`) und/oder Ollama (`ollama signin`),
   mindestens einmal angemeldet
 
 Keine Pakete, kein Framework, keine Laufzeit – ein einzelnes `.app`.
 
 ## Installation
+
+### macOS
 
 **[⬇ Token Stats herunterladen](https://github.com/mahype/token-stats/releases/latest)** –
 unter *Assets* die Datei `Token-Stats-<Version>.dmg`.
@@ -153,7 +159,7 @@ Die App ist mit Developer ID signiert und von Apple notarisiert. Beim ersten Sta
 sie alle Session-Logs einmal ein (bei einigen Gigabyte Logs etwa 40 Sekunden), danach
 nur noch, was neu dazukommt.
 
-### Aus dem Quelltext bauen
+### macOS aus dem Quelltext bauen
 
 Mit Xcode 16 oder neuer (Swift 6) und [XcodeGen](https://github.com/yonaskolb/XcodeGen):
 
@@ -169,12 +175,19 @@ auch wenn `xcode-select` auf die Command Line Tools zeigt.
 
 ### Windows
 
-Eine Portierung als Tray-App für Windows 10/11 (nativ ARM64, auch x64) liegt in
-[`windows/`](windows/README.md) – gleiche Datenquellen und Rechnung, gebaut mit .NET 10.
+Tray-App für Windows 10/11 (nativ ARM64, auch x64) in [`windows/`](windows/README.md) –
+gleiche Datenquellen und Rechnung, gebaut mit .NET 10. Die Bauanleitung
+steht dort.
+
+### Linux (in Arbeit)
+
+Noch nicht veröffentlicht: ein Plasma-6-Widget und ein GTK-Tray-Widget sind in
+Entwicklung ([PR #14](https://github.com/mahype/token-stats/pull/14)). Sobald sie
+gemergt sind, steht Linux hier gleichrangig neben macOS und Windows.
 
 ## Entfernen
 
-**Bei Anmeldung starten** ausschalten, die App beenden, dann:
+Unter macOS: **Bei Anmeldung starten** ausschalten, die App beenden, dann:
 
 ```bash
 rm -rf "/Applications/Token Stats.app"
@@ -182,7 +195,9 @@ rm -rf ~/Library/Application\ Support/TokenStats   # letzter Stand und Verbrauch
 defaults delete de.mahype.TokenStats              # Einstellungen
 ```
 
-Deine Anmeldungen bei Claude Code, Codex, Antigravity und Ollama bleiben unberührt.
+Unter Windows: App beenden, `TokenStats.exe` und den Ordner `%LOCALAPPDATA%\TokenStats`
+löschen (siehe [`windows/`](windows/README.md)). Deine Anmeldungen bei Claude Code, Codex,
+Antigravity und Ollama bleiben unberührt.
 
 ## Wie aktuell sind die Zahlen?
 

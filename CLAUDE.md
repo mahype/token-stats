@@ -1,9 +1,9 @@
 # Token Stats
 
-macOS-Menüleisten-App, die die Kontingente aller lokal angemeldeten KI-Coding-Abos
-anzeigt (Claude Code, Codex, später Gemini/Copilot/Cursor/Prepaid-Anbieter) — plus eine
-Verbrauchsseite mit Tokenzahlen und API-Vergleichswert. Vorbild sind die Bar-Widgets aus
-dem Omarchy-Umfeld.
+Menüleisten- bzw. Tray-App für macOS und Windows (Linux in Arbeit), die die Kontingente
+aller lokal angemeldeten KI-Coding-Abos anzeigt (Claude Code, Codex, später
+Gemini/Copilot/Cursor/Prepaid-Anbieter) — plus eine Verbrauchsseite mit Tokenzahlen und
+API-Vergleichswert. Vorbild sind die Bar-Widgets aus dem Omarchy-Umfeld.
 
 ## Stand
 
