@@ -124,6 +124,14 @@ public class PricingTests
         Assert.Equal("812 k", Format.Tokens(812_345));
         Assert.Equal("950", Format.Tokens(950));
     }
+
+    [Fact]
+    public void AmountUsesResponseCurrency()
+    {
+        Assert.Equal("331,63 €", Format.Amount(33163, "EUR", 2));
+        Assert.Equal("50,00 $", Format.Amount(5000, null, null));
+        Assert.Equal("1.200 CHF", Format.Amount(1200, "chf", 0));
+    }
 }
 
 public class PeriodTests

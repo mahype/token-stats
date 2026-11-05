@@ -2,9 +2,9 @@ import CryptoKit
 import Foundation
 
 /// Ollama Cloud: signierte Anfrage mit dem Schlüssel `~/.ollama/id_ed25519`
-/// → `ollama.com/api/usage` (Limits) und `ollama.com/api/me` (Plan).
+/// → `ollama.com/api/balance` (Limits/Guthaben), `/api/usage` (Statistik) und `/api/me` (Plan).
 ///
-/// Ollama kennt kein Token. `ollama signin` verknüpft den lokalen Schlüssel mit dem Konto,
+/// Die App benötigt keinen API-Key. `ollama signin` verknüpft den lokalen Schlüssel mit dem Konto,
 /// und jede Anfrage trägt eine Signatur über Methode, Pfad und Zeitstempel – genau wie
 /// in der Ollama-CLI (`auth/auth.go`). Der Schlüssel wird nur gelesen; raus geht die
 /// Signatur. Lokale Modelle haben kein Kontingent und tauchen hier nicht auf.
@@ -28,8 +28,12 @@ struct OllamaProvider: UsageProvider {
               let key = Self.parsePrivateKey(pem)
         else { throw ProviderError.notLoggedIn(hint: Self.hint) }
 
-        var snapshot = try Self.parseUsage(try await request("GET", "/api/usage", key: key))
-        // Plan ist Beiwerk: Scheitert die zweite Abfrage, bleiben die Limits trotzdem stehen.
+        var snapshot = try Self.parseBalance(try await request("GET", "/api/balance", key: key))
+        // Statistik und Plan sind Beiwerk: Fehler dort dürfen die Limits nicht ausblenden.
+        if let data = try? await request("GET", "/api/usage", key: key),
+           let usage = try? Self.parseUsage(data) {
+            snapshot.extras += usage.extras
+        }
         if let me = try? await request("POST", "/api/me", key: key) {
             snapshot.account = Self.parseAccount(me)
         }
@@ -102,6 +106,70 @@ struct OllamaProvider: UsageProvider {
 
     // MARK: Antwort
 
+    private struct Balance: Decodable {
+        struct Included: Decodable {
+            struct Limit: Decodable {
+                var remaining_percent: Double?
+                var resets_at: String?
+            }
+            struct Period: Decodable {
+                var until: String?
+            }
+            var session: Limit?
+            var weekly: Limit?
+            var balance_usd: Double?
+            var allowance_usd: Double?
+            var period: Period?
+        }
+        struct Purchased: Decodable {
+            var balance_usd: Double?
+        }
+        var included: Included?
+        var purchased: Purchased?
+    }
+
+    /// Seit Oktober 2026 liefert /api/balance die Limits, /api/usage nur noch Statistik.
+    static func parseBalance(_ data: Data, now: Date = .now) throws -> ProviderSnapshot {
+        guard let response = try? JSONDecoder().decode(Balance.self, from: data),
+              let included = response.included
+        else { throw ProviderError.badResponse }
+
+        let known: [(id: String, name: String, note: String, length: TimeInterval, limit: Balance.Included.Limit?)] = [
+            ("session", "Session", "5 h", 5 * 3600, included.session),
+            ("weekly", "Woche", "7 d", 7 * 24 * 3600, included.weekly),
+        ]
+        var windows = known.compactMap { entry -> LimitWindow? in
+            guard let remaining = entry.limit?.remaining_percent,
+                  remaining.isFinite, (0...100).contains(remaining) else { return nil }
+            return LimitWindow(id: entry.id, name: entry.name, scopeNote: entry.note,
+                               percent: (100 - remaining) / 100,
+                               resetsAt: entry.limit?.resets_at.flatMap(parseDate),
+                               windowLength: entry.length)
+        }
+        var extras: [ExtraValue] = []
+        if let balance = included.balance_usd, balance.isFinite {
+            extras.append(ExtraValue(id: "included-balance", text: "Abo-Guthaben \(Format.money(balance))"))
+            if let allowance = included.allowance_usd, allowance.isFinite, allowance > 0 {
+                windows.append(LimitWindow(id: "monthly", name: "Monat", scopeNote: "Abo-Monat",
+                                           percent: max(0, 1 - balance / allowance),
+                                           resetsAt: included.period?.until.flatMap(parseDate),
+                                           windowLength: nil))
+            }
+        }
+        // Ein Nullbetrag ist ein gültiger Stand, auch bei einem Plan ohne Kontingent.
+        guard !windows.isEmpty || !extras.isEmpty else { throw ProviderError.badResponse }
+        if let balance = response.purchased?.balance_usd, balance.isFinite, balance >= 0 {
+            extras.append(ExtraValue(id: "purchased-balance", text: "Zusatzguthaben \(Format.money(balance))"))
+        }
+        return ProviderSnapshot(account: nil, windows: windows, extras: extras, fetchedAt: now)
+    }
+
+    private static func parseDate(_ string: String) -> Date? {
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return fractional.date(from: string) ?? ISO8601DateFormatter().date(from: string)
+    }
+
     private struct Usage: Decodable {
         struct Limit: Decodable {
             struct Model: Decodable {
@@ -114,14 +182,46 @@ struct OllamaProvider: UsageProvider {
         struct Activity: Decodable {
             var cost: String?
         }
+        struct Totals: Decodable {
+            var request_count: Int?
+            var usage_usd: Double?
+            var input_tokens: Int?
+            var cached_input_tokens: Int?
+            var output_tokens: Int?
+        }
+        var range: String?
+        var totals: Totals?
         var limits: [String: Limit]?
         var activity: Activity?
     }
 
     static func parseUsage(_ data: Data, now: Date = .now) throws -> ProviderSnapshot {
-        guard let response = try? JSONDecoder().decode(Usage.self, from: data),
-              let limits = response.limits, !limits.isEmpty
+        guard let response = try? JSONDecoder().decode(Usage.self, from: data)
         else { throw ProviderError.badResponse }
+
+        if let totals = response.totals {
+            let periods = ["24h": "24 h + aktuelle Stunde", "7d": "7 Tage + heute", "30d": "30 Tage + heute"]
+            guard let period = response.range.flatMap({ periods[$0] }),
+                  let requests = totals.request_count, requests >= 0
+            else { throw ProviderError.badResponse }
+            var extras = [ExtraValue(id: "requests", text: "\(requests) Anfragen / \(period)")]
+            if let cost = totals.usage_usd, cost.isFinite, cost >= 0 {
+                extras.append(ExtraValue(id: "usage-cost", text: "Verbrauch \(Format.money(cost)) / \(period)"))
+            }
+            for (id, name, count) in [
+                ("input", "Eingabe", totals.input_tokens),
+                ("cache", "Cache-Lesen", totals.cached_input_tokens),
+                ("output", "Ausgabe", totals.output_tokens),
+            ] {
+                if let count, count >= 0 {
+                    extras.append(ExtraValue(id: "tokens-\(id)", text: "\(name) \(Format.tokens(count)) Tokens / \(period)"))
+                }
+            }
+            return ProviderSnapshot(account: nil, windows: [], extras: extras, fetchedAt: now)
+        }
+
+        // Alte Antworten bleiben lesbar; fehlende Statistik ist niemals ein 0-%-Limit.
+        guard let limits = response.limits, !limits.isEmpty else { throw ProviderError.badResponse }
 
         // Fenster ohne Reset-Zeit: Ollama sagt nur, wie viel verbraucht ist, nicht wann es endet.
         let known: [(key: String, name: String, note: String)] = [

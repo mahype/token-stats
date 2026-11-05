@@ -16,6 +16,16 @@ public static class Format
 
     public static string Dollars(double cents) => $"{(cents / 100).ToString("#,##0.00", Culture)} $";
 
+    /// <summary>Betrag in der kleinsten Einheit der Antwort: (33163, "EUR", 2) → „331,63 €“. Ohne Währung gilt Dollar, ohne Stellenzahl zwei.</summary>
+    public static string Amount(double minor, string? currency, int? decimals)
+    {
+        var digits = decimals is >= 0 ? decimals.Value : 2;
+        var value = minor / Math.Pow(10, digits);
+        var code = (currency ?? "").Trim().ToUpperInvariant();
+        var symbol = code switch { "" or "USD" => "$", "EUR" => "€", "GBP" => "£", _ => code };
+        return $"{Number(value, digits)} {symbol}";
+    }
+
     public static string Money(double amount) => Dollars(amount * 100);
 
     /// <summary>„38,4 M“, „812 k“, „950“</summary>

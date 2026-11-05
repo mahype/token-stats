@@ -17,6 +17,27 @@ enum Format {
         return "\(formatter.string(from: NSNumber(value: cents / 100)) ?? "?") $"
     }
 
+    /// Betrag in der kleinsten Einheit der Antwort: (33163, "EUR", 2) → „331,63 €“.
+    /// Ohne Währung (ältere Antworten) gilt Dollar, ohne Stellenzahl zwei.
+    static func amount(minor: Double, currency: String?, decimals: Int?) -> String {
+        let digits = (decimals ?? 2) >= 0 ? (decimals ?? 2) : 2
+        let formatter = NumberFormatter()
+        formatter.locale = locale
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = digits
+        formatter.maximumFractionDigits = digits
+        let value = minor / pow(10, Double(digits))
+        let code = currency?.trimmingCharacters(in: .whitespaces).uppercased() ?? ""
+        let symbol: String
+        switch code {
+        case "", "USD": symbol = "$"
+        case "EUR": symbol = "€"
+        case "GBP": symbol = "£"
+        default: symbol = code
+        }
+        return "\(formatter.string(from: NSNumber(value: value)) ?? "?") \(symbol)"
+    }
+
     static func money(_ amount: Double) -> String {
         dollars(cents: amount * 100)
     }

@@ -9,9 +9,9 @@ namespace TokenStats.Providers;
 
 /// <summary>
 /// Ollama Cloud: signierte Anfrage mit dem Schlüssel <c>%USERPROFILE%\.ollama\id_ed25519</c>
-/// → <c>ollama.com/api/usage</c> (Limits) und <c>ollama.com/api/me</c> (Plan).
+/// → <c>ollama.com/api/balance</c> (Limits/Guthaben), <c>/api/usage</c> (Statistik) und <c>/api/me</c> (Plan).
 ///
-/// Ollama kennt kein Token. <c>ollama signin</c> verknüpft den lokalen Schlüssel mit dem Konto,
+/// Die App benötigt keinen API-Key. <c>ollama signin</c> verknüpft den lokalen Schlüssel mit dem Konto,
 /// und jede Anfrage trägt eine Signatur über Methode, Pfad und Zeitstempel – genau wie in der
 /// Ollama-CLI (<c>auth/auth.go</c>). Der Schlüssel wird nur gelesen; raus geht die Signatur.
 /// Lokale Modelle haben kein Kontingent und tauchen hier nicht auf.
@@ -36,8 +36,10 @@ public sealed class OllamaProvider : IUsageProvider
         catch (Exception error) when (error is IOException or UnauthorizedAccessException) { key = null; }
         if (key is null) throw ProviderException.NotLoggedIn(Hint);
 
-        var snapshot = ParseUsage(await RequestAsync("GET", "/api/usage", key), DateTimeOffset.UtcNow);
-        // Plan ist Beiwerk: Scheitert die zweite Abfrage, bleiben die Limits trotzdem stehen.
+        var snapshot = ParseBalance(await RequestAsync("GET", "/api/balance", key), DateTimeOffset.UtcNow);
+        // Statistik und Plan sind Beiwerk: Fehler dort dürfen die Limits nicht ausblenden.
+        try { snapshot.Extras.AddRange(ParseUsage(await RequestAsync("GET", "/api/usage", key), DateTimeOffset.UtcNow).Extras); }
+        catch (ProviderException) { }
         try { snapshot.Account = ParseAccount(await RequestAsync("POST", "/api/me", key)); }
         catch (ProviderException) { }
         return snapshot;
@@ -118,6 +120,49 @@ public sealed class OllamaProvider : IUsageProvider
 
     // Antwort
 
+    /// <summary>Seit Oktober 2026 liefert /api/balance die Limits, /api/usage nur noch Statistik.</summary>
+    public static ProviderSnapshot ParseBalance(byte[] data, DateTimeOffset now)
+    {
+        var response = JsonRead.ParseObject(data);
+        var included = response.Obj("included");
+        if (included is null) throw ProviderException.BadResponse();
+
+        var windows = new List<LimitWindow>();
+        foreach (var (id, name, note, length) in new[]
+        {
+            ("session", "Session", "5 h", TimeSpan.FromHours(5)),
+            ("weekly", "Woche", "7 d", TimeSpan.FromDays(7)),
+        })
+        {
+            var limit = included.Obj(id);
+            if (limit.Num("remaining_percent") is not { } remaining || !double.IsFinite(remaining) || remaining is < 0 or > 100)
+                continue;
+            windows.Add(new LimitWindow
+            {
+                Id = id, Name = name, ScopeNote = note, Percent = (100 - remaining) / 100,
+                ResetsAt = JsonRead.Date(limit.Str("resets_at")), WindowLength = length.TotalSeconds,
+            });
+        }
+
+        var extras = new List<ExtraValue>();
+        if (included.Num("balance_usd") is { } balance && double.IsFinite(balance))
+        {
+            extras.Add(new ExtraValue("included-balance", $"Abo-Guthaben {Format.Money(balance)}"));
+            if (included.Num("allowance_usd") is { } allowance && double.IsFinite(allowance) && allowance > 0)
+                windows.Add(new LimitWindow
+                {
+                    Id = "monthly", Name = "Monat", ScopeNote = "Abo-Monat", Percent = Math.Max(0, 1 - balance / allowance),
+                    ResetsAt = JsonRead.Date(included.Obj("period").Str("until")),
+                });
+        }
+        // Ein Nullbetrag ist ein gültiger Stand, auch bei einem Plan ohne Kontingent.
+        if (windows.Count == 0 && extras.Count == 0) throw ProviderException.BadResponse();
+        if (response.Obj("purchased").Num("balance_usd") is { } purchased && double.IsFinite(purchased) && purchased >= 0)
+            extras.Add(new ExtraValue("purchased-balance", $"Zusatzguthaben {Format.Money(purchased)}"));
+
+        return new ProviderSnapshot { Windows = windows, Extras = extras, FetchedAt = now };
+    }
+
     static readonly (string Key, string Name, string Note)[] KnownWindows =
     [
         ("session", "Session", "5 h"), ("weekly", "Woche", "7 d"), ("monthly", "Monat", "Abo-Monat"),
@@ -126,6 +171,27 @@ public sealed class OllamaProvider : IUsageProvider
     public static ProviderSnapshot ParseUsage(byte[] data, DateTimeOffset now)
     {
         var response = JsonRead.ParseObject(data);
+        if (response.Obj("totals") is { } totals)
+        {
+            var period = response.Str("range") switch
+            {
+                "24h" => "24 h + aktuelle Stunde", "7d" => "7 Tage + heute", "30d" => "30 Tage + heute", _ => null,
+            };
+            if (period is null || totals.Num("request_count") is not { } requests || !double.IsFinite(requests) || requests < 0 || requests != Math.Truncate(requests))
+                throw ProviderException.BadResponse();
+            var usageExtras = new List<ExtraValue> { new("requests", $"{requests:0} Anfragen / {period}") };
+            if (totals.Num("usage_usd") is { } usageCost && double.IsFinite(usageCost) && usageCost >= 0)
+                usageExtras.Add(new ExtraValue("usage-cost", $"Verbrauch {Format.Money(usageCost)} / {period}"));
+            foreach (var (id, name, field) in new[]
+            {
+                ("input", "Eingabe", "input_tokens"), ("cache", "Cache-Lesen", "cached_input_tokens"), ("output", "Ausgabe", "output_tokens"),
+            })
+                if (totals.Num(field) is { } count && double.IsFinite(count) && count >= 0 && count <= long.MaxValue && count == Math.Truncate(count))
+                    usageExtras.Add(new ExtraValue($"tokens-{id}", $"{name} {Format.Tokens((long)count)} Tokens / {period}"));
+            return new ProviderSnapshot { Extras = usageExtras, FetchedAt = now };
+        }
+
+        // Alte Antworten bleiben lesbar; fehlende Statistik ist niemals ein 0-%-Limit.
         var limits = response.Obj("limits");
         if (limits is null || limits.Count == 0) throw ProviderException.BadResponse();
 
