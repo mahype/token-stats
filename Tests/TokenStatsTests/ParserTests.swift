@@ -69,6 +69,13 @@ import Testing
         #expect(snapshot.windows[0].windowLength == TimeInterval(7 * 24 * 3600))
     }
 
+    @Test func wrongTypedCurrencyFieldsKeepLimits() throws {
+        let json = #"{"five_hour":{"utilization":41},"extra_usage":{"is_enabled":true,"monthly_limit":5000,"used_credits":1240,"currency":5,"decimal_places":"2"}}"#
+        let snapshot = try ClaudeProvider.parse(Data(json.utf8))
+        #expect(snapshot.windows.map(\.name) == ["Session"])
+        #expect(snapshot.extras.map(\.text) == ["Extra 12,40 $ / 50,00 $"])
+    }
+
     @Test func rejectsResponseWithoutAnyLimit() {
         let json = #"{"five_hour":null,"extra_usage":{"is_enabled":true,"monthly_limit":50000,"used_credits":100,"currency":"EUR","decimal_places":2}}"#
         #expect(throws: ProviderError.badResponse) { try ClaudeProvider.parse(Data(json.utf8)) }

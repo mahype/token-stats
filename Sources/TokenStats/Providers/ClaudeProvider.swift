@@ -129,6 +129,21 @@ struct ClaudeProvider: UsageProvider {
             var used_credits: Double?
             var currency: String?
             var decimal_places: Int?
+
+            enum CodingKeys: String, CodingKey {
+                case is_enabled, monthly_limit, used_credits, currency, decimal_places
+            }
+
+            /// Währung und Stellenzahl sind Zusatzangaben: Ein falscher Typ verwirft nur sie
+            /// (Anzeige dann in „$“ mit zwei Stellen), nicht die ganze Antwort mit ihren Limits.
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                is_enabled = try container.decodeIfPresent(Bool.self, forKey: .is_enabled)
+                monthly_limit = try container.decodeIfPresent(Double.self, forKey: .monthly_limit)
+                used_credits = try container.decodeIfPresent(Double.self, forKey: .used_credits)
+                currency = try? container.decodeIfPresent(String.self, forKey: .currency)
+                decimal_places = try? container.decodeIfPresent(Int.self, forKey: .decimal_places)
+            }
         }
         var five_hour: Window?
         var seven_day: Window?
