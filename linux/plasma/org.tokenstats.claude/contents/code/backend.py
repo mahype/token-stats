@@ -5,7 +5,7 @@ Limits come from api.anthropic.com/api/oauth/usage (login from ~/.claude/.creden
 token counts from ~/.claude/projects/**/*.jsonl, prices from pricing.json (next to this file once installed, otherwise
 Sources/TokenStats/Resources/pricing.json of the checkout).
 """
-import glob, json, os, re, sys, urllib.error, urllib.request
+import glob, json, os, re, sys, time, urllib.error, urllib.request
 from datetime import datetime, timedelta
 
 HOME = os.path.expanduser("~")
@@ -14,6 +14,9 @@ CREDS = f"{HOME}/.claude/.credentials.json"
 PROJECTS = f"{HOME}/.claude/projects"
 CACHE_DIR = f"{HOME}/.cache/tokenstats"
 LIMITS_CACHE = f"{CACHE_DIR}/limits.json"
+# Der Usage-Endpunkt ist hart rate-limitiert: höchstens eine Abfrage alle 300 s, auch bei Klick auf
+# „Aktualisieren“ oder nach einem Neustart (5 s Toleranz für den Timer). Der Stand liegt im Cache.
+MIN_INTERVAL_S = 295
 WINDOWS = {"session": 5 * 3600, "weekly_all": 7 * 86400, "weekly_scoped": 7 * 86400}
 
 
@@ -35,9 +38,9 @@ def fetch_limits():
         if l["kind"] == "session":
             title, sub = "Session", "5 h"
         elif l["kind"] == "weekly_all":
-            title, sub = "Week", "7 d, all models"
+            title, sub = "Woche", "7 d, alle Modelle"
         else:
-            title, sub = model or l["kind"].replace("_", " ").title(), "weekly limit"
+            title, sub = model or l["kind"].replace("_", " ").title(), "Wochenlimit"
         rows.append({"title": title, "sub": sub, "pct": l["percent"], "reset": l.get("resets_at"),
                      "window": WINDOWS.get(l["kind"], 7 * 86400)})
     extra = data.get("extra_usage") or {}
@@ -130,30 +133,66 @@ def collect_usage(days=31):
     return out
 
 
-def main():
-    result = {"error": None, "priceDate": PRICES_AS_OF}
+def read_cache():
+    try:
+        d = json.load(open(LIMITS_CACHE))
+    except (OSError, ValueError):
+        return {}
+    # ältere Fassung: nur der Stand, ohne Zeitstempel
+    return d if isinstance(d, dict) and "info" in d else {"info": d, "attemptedAt": 0}
+
+
+def write_cache(cache):
+    try:
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        json.dump(cache, open(LIMITS_CACHE, "w"))
+    except OSError:
+        pass
+
+
+def hhmm(ts):
+    return datetime.fromtimestamp(ts).strftime("%H:%M")
+
+
+def limits_with_cache():
+    """-> (Stand, Fehlertext). Fragt nur ab, wenn die letzte Abfrage lang genug her ist."""
+    now = time.time()
+    cache = read_cache()
+    info = cache.get("info")
+    retry_at = cache.get("retryAt", 0)
+    if now < retry_at:
+        return info, f"Abfrage pausiert (Rate-Limit) · wieder ab {hhmm(retry_at)}"
+    if info and now - cache.get("attemptedAt", 0) < MIN_INTERVAL_S:
+        return info, cache.get("error")
+    cache.update({"attemptedAt": now, "retryAt": 0, "error": None})
     try:
         info = fetch_limits()
-        os.makedirs(CACHE_DIR, exist_ok=True)
-        json.dump(info, open(LIMITS_CACHE, "w"))
+        cache["info"] = info
     except urllib.error.HTTPError as e:
-        info = None
-        result["error"] = ("rate-limited, showing last values" if e.code == 429
-                           else "login expired: run `claude`" if e.code == 401 else f"HTTP {e.code}")
+        if e.code == 429:
+            try:
+                wait = int(e.headers.get("Retry-After", ""))
+            except ValueError:
+                wait = 0
+            cache["retryAt"] = now + max(wait, MIN_INTERVAL_S)
+            cache["error"] = f"Abfrage pausiert (Rate-Limit) · wieder ab {hhmm(cache['retryAt'])}"
+        else:
+            cache["error"] = "Anmeldung abgelaufen: `claude` starten" if e.code == 401 else f"HTTP {e.code}"
     except Exception as e:
-        info = None
-        result["error"] = f"offline ({type(e).__name__})"
-    if info is None:
-        try:
-            info = json.load(open(LIMITS_CACHE))
-        except (OSError, ValueError):
-            info = {"plan": "", "limits": [], "extra": None}
-    result.update(info)
+        cache["error"] = f"Offline ({type(e).__name__})"
+    write_cache(cache)
+    return cache.get("info"), cache["error"]
+
+
+def main():
+    result = {"error": None, "priceDate": PRICES_AS_OF}
+    info, result["error"] = limits_with_cache()
+    result.update(info or {"plan": "", "limits": [], "extra": None})
     try:
         result["usage"] = collect_usage()
     except Exception as e:
         result["usage"] = []
-        result["error"] = result["error"] or f"usage: {type(e).__name__}"
+        result["error"] = result["error"] or f"Verbrauch: {type(e).__name__}"
     json.dump(result, sys.stdout)
 
 

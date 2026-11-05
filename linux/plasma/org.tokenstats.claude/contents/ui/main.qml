@@ -15,7 +15,7 @@ PlasmoidItem {
 
     Plasmoid.status: PlasmaCore.Types.ActiveStatus
     toolTipMainText: "Token Stats"
-    toolTipSubText: info ? "Claude " + Math.round(worst) + " %" : "loading…"
+    toolTipSubText: info ? "Claude " + Math.round(worst) + " %" : "lädt …"
 
     compactRepresentation: TrayIcon {
         pct: root.worst

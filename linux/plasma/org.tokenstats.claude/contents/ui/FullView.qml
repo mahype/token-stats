@@ -32,7 +32,7 @@ ColumnLayout {
         RowLayout {
             spacing: 0
             PC3.Button { text: "Limits"; checkable: true; checked: view.page === "limits"; autoExclusive: true; onClicked: view.page = "limits" }
-            PC3.Button { text: "Usage"; checkable: true; checked: view.page === "usage"; autoExclusive: true; onClicked: view.page = "usage" }
+            PC3.Button { text: "Verbrauch"; checkable: true; checked: view.page === "usage"; autoExclusive: true; onClicked: view.page = "usage" }
         }
     }
     PC3.TabBar {
@@ -65,13 +65,13 @@ ColumnLayout {
             Layout.fillWidth: true
             elide: Text.ElideRight
             opacity: 0.7
-            text: (view.updated ? "updated " + Qt.formatTime(view.updated, "hh:mm") : "loading…")
+            text: (view.updated ? "Stand " + Qt.formatTime(view.updated, "hh:mm") : "lädt …")
                   + (view.info && view.info.error ? "  ·  ⚠ " + view.info.error : "")
         }
         PC3.ToolButton { icon.name: "view-refresh"; onClicked: view.refreshRequested() }
     }
 
-    Component { id: loading; PC3.Label { text: "Loading…"; opacity: 0.7 } }
+    Component { id: loading; PC3.Label { text: "Lädt …"; opacity: 0.7 } }
 
     Component {
         id: limitsPage
@@ -127,9 +127,9 @@ ColumnLayout {
                         PC3.Label {
                             visible: row.st.elapsed >= 0
                             color: view.tint(row.modelData.pct)
-                            text: Math.abs(row.st.gap) < row.modelData.window * 0.02 ? "on pace"
-                                  : row.st.gap > 0 ? U.duration(row.st.gap) + " ahead"
-                                                   : U.duration(-row.st.gap) + " unused"
+                            text: Math.abs(row.st.gap) < row.modelData.window * 0.02 ? "im Takt"
+                                  : row.st.gap > 0 ? U.duration(row.st.gap) + " vorgegriffen"
+                                                   : U.duration(-row.st.gap) + " ungenutzt"
                         }
                     }
                 }
@@ -159,8 +159,8 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 0
                 Repeater {
-                    model: [{ t: "Today", n: 1 }, { t: "7 days", n: 7 }, { t: "30 days", n: 30 },
-                            { t: "This month", n: new Date().getDate() }]
+                    model: [{ t: "Heute", n: 1 }, { t: "7 Tage", n: 7 }, { t: "30 Tage", n: 30 },
+                            { t: "Monat", n: new Date().getDate() }]
                     PC3.ToolButton {
                         required property var modelData
                         text: modelData.t
@@ -175,8 +175,8 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: Kirigami.Units.largeSpacing
                 Repeater {
-                    model: [{ t: "TOKENS", v: U.fmtTokens(usage.agg.total), s: U.fmtTokens(usage.agg.cache) + " of which cache" },
-                            { t: "API VALUE", v: U.fmtMoney(usage.agg.value), s: "at list prices" }]
+                    model: [{ t: "TOKENS", v: U.fmtTokens(usage.agg.total), s: U.fmtTokens(usage.agg.cache) + " davon Cache" },
+                            { t: "API-VERGLEICHSWERT", v: U.fmtMoney(usage.agg.value), s: "zu Listenpreisen" }]
                     Rectangle {
                         required property var modelData
                         Layout.fillWidth: true
@@ -206,11 +206,11 @@ ColumnLayout {
                     RowLayout {
                         Layout.fillWidth: true
                         Kirigami.Heading { text: modelData.model; level: 4; Layout.fillWidth: true }
-                        Kirigami.Heading { text: modelData.priced ? U.fmtMoney(modelData.value) : "n/a"; level: 4 }
+                        Kirigami.Heading { text: modelData.priced ? U.fmtMoney(modelData.value) : "k. A."; level: 4 }
                     }
                     PC3.Label {
                         opacity: 0.7
-                        text: U.fmtTokens(modelData.in) + " in · " + U.fmtTokens(modelData.out) + " out · " + U.fmtTokens(modelData.cache) + " cache"
+                        text: U.fmtTokens(modelData.in) + " Input · " + U.fmtTokens(modelData.out) + " Output · " + U.fmtTokens(modelData.cache) + " Cache"
                     }
                     Kirigami.Separator { Layout.fillWidth: true; Layout.topMargin: Kirigami.Units.smallSpacing }
                 }
@@ -218,7 +218,7 @@ ColumnLayout {
             RowLayout {
                 Layout.fillWidth: true
                 Kirigami.Heading {
-                    text: (view.rangeDays === 1 ? "Today" : view.rangeDays + " days") + " · " + U.fmtTokens(usage.agg.total) + " tokens"
+                    text: (view.rangeDays === 1 ? "Heute" : view.rangeDays + " Tage") + " · " + U.fmtTokens(usage.agg.total) + " Tokens"
                     level: 4
                     Layout.fillWidth: true
                 }
@@ -229,10 +229,10 @@ ColumnLayout {
                 wrapMode: Text.WordWrap
                 opacity: 0.7
                 font.pointSize: Kirigami.Theme.smallFont.pointSize
-                text: "Local token counts from the session logs × list price"
-                      + (view.info.priceDate ? " (as of " + view.info.priceDate + ")" : "")
-                      + ", incl. cache rates. No billing data, only what the same usage would cost via the API."
-                      + (usage.agg.unpriced ? " Some models are missing from the price table." : "")
+                text: "Lokal gezählte Tokens aus den Sitzungsprotokollen × Listenpreis"
+                      + (view.info.priceDate ? " (Stand " + view.info.priceDate + ")" : "")
+                      + ", inkl. Cache-Tarife. Keine Abrechnungsdaten – nur, was derselbe Verbrauch über die API gekostet hätte."
+                      + (usage.agg.unpriced ? " Modelle ohne Listenpreis sind nicht eingerechnet." : "")
             }
         }
     }

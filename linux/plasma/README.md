@@ -10,7 +10,10 @@ and `rsync`. Same data sources as the other versions:
 
 - Limits: `GET https://api.anthropic.com/api/oauth/usage` with the login from
   `~/.claude/.credentials.json` (read only, the token is never refreshed or written). The last
-  good values are cached in `~/.cache/tokenstats/`, so HTTP 429 or being offline keeps them.
+  good values are cached in `~/.cache/tokenstats/limits.json`, so HTTP 429 or being offline keeps
+  them. The endpoint is rate limited: at most one request per 300 s, also for the refresh button
+  and after a restart (the cache holds the time of the last request). After HTTP 429 the widget
+  pauses until `Retry-After` has passed and shows the time.
 - Usage: `~/.claude/projects/**/*.jsonl`, last message per id, cache writes split by 5 m / 1 h.
 - Prices: [`Sources/TokenStats/Resources/pricing.json`](../../Sources/TokenStats/Resources/pricing.json),
   copied next to the backend on install, so `Scripts/update-pricing.sh` plus a re-install updates it.
@@ -35,4 +38,5 @@ Test without the panel: `plasmawindowed org.tokenstats.claude`.
 ## Limits of this version
 
 - No settings page; the refresh interval is a constant in `main.qml`.
+- The UI is in German, like the macOS and Windows apps; the documentation here is still English.
 - Do not update with `kpackagetool6 -u` on the installed copy, it deletes the package.

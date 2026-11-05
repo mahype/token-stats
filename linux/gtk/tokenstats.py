@@ -4,7 +4,7 @@
 Limits come from api.anthropic.com/api/oauth/usage, token counts from ~/.claude/projects/**/*.jsonl,
 prices from Sources/TokenStats/Resources/pricing.json of this repo (list prices = API comparison value).
 """
-import json, os, sys, glob, re, subprocess, threading, urllib.request, urllib.error
+import json, os, sys, glob, re, subprocess, threading, time, urllib.request, urllib.error
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
@@ -33,6 +33,11 @@ CREDS = f"{HOME}/.claude/.credentials.json"
 PROJECTS = f"{HOME}/.claude/projects"
 ICON_DIR = f"{HOME}/.cache/tokenstats"
 INTERVAL_S = 300
+# Der Usage-Endpunkt ist hart rate-limitiert: höchstens eine Abfrage alle 300 s, auch bei Klick auf
+# „Aktualisieren“ oder nach einem Neustart (5 s Toleranz für den Timer). Der Stand liegt im Cache,
+# den sich diese Fassung mit dem Plasma-Widget teilt.
+MIN_INTERVAL_S = 295
+LIMITS_CACHE = f"{ICON_DIR}/limits.json"
 
 GREEN, YELLOW, RED = (0.30, 0.75, 0.50), (0.89, 0.66, 0.24), (0.85, 0.30, 0.30)
 BLUE, BLUE_DIM = (0.0, 0.57, 1.0), (0.06, 0.37, 0.64)
@@ -84,9 +89,9 @@ def fetch_limits():
         if l["kind"] == "session":
             title, sub = "Session", "5 h"
         elif l["kind"] == "weekly_all":
-            title, sub = "Week", "7 d, all models"
+            title, sub = "Woche", "7 d, alle Modelle"
         else:
-            title, sub = model or l["kind"].replace("_", " ").title(), "weekly limit"
+            title, sub = model or l["kind"].replace("_", " ").title(), "Wochenlimit"
         rows.append({"title": title, "sub": sub, "pct": l["percent"], "reset": l.get("resets_at"),
                      "window": WINDOWS.get(l["kind"], 7 * 86400)})
     extra = data.get("extra_usage") or {}
@@ -97,6 +102,53 @@ def fetch_limits():
     else:
         extra = None
     return {"plan": plan_label(c), "limits": rows, "extra": extra}
+
+
+def read_cache():
+    try:
+        d = json.load(open(LIMITS_CACHE))
+    except (OSError, ValueError):
+        return {}
+    # ältere Fassung: nur der Stand, ohne Zeitstempel
+    return d if isinstance(d, dict) and "info" in d else {"info": d, "attemptedAt": 0}
+
+
+def write_cache(cache):
+    try:
+        os.makedirs(ICON_DIR, exist_ok=True)
+        json.dump(cache, open(LIMITS_CACHE, "w"))
+    except OSError:
+        pass
+
+
+def limits_with_cache():
+    """-> (Stand, Fehlertext). Fragt nur ab, wenn die letzte Abfrage lang genug her ist."""
+    now = time.time()
+    cache = read_cache()
+    info = cache.get("info")
+    retry_at = cache.get("retryAt", 0)
+    paused = lambda ts: f"Abfrage pausiert (Rate-Limit) · wieder ab {datetime.fromtimestamp(ts):%H:%M}"
+    if now < retry_at:
+        return info, paused(retry_at)
+    if info and now - cache.get("attemptedAt", 0) < MIN_INTERVAL_S:
+        return info, cache.get("error")
+    cache.update({"attemptedAt": now, "retryAt": 0, "error": None})
+    try:
+        cache["info"] = fetch_limits()
+    except urllib.error.HTTPError as e:
+        if e.code == 429:
+            try:
+                wait = int(e.headers.get("Retry-After", ""))
+            except ValueError:
+                wait = 0
+            cache["retryAt"] = now + max(wait, MIN_INTERVAL_S)
+            cache["error"] = paused(cache["retryAt"])
+        else:
+            cache["error"] = "Anmeldung abgelaufen: `claude` starten" if e.code == 401 else f"HTTP {e.code}"
+    except Exception as e:
+        cache["error"] = f"Offline ({type(e).__name__})"
+    write_cache(cache)
+    return cache.get("info"), cache["error"]
 
 
 def load_prices():
@@ -322,7 +374,7 @@ class Popup(Gtk.Window):
         head.pack_start(label("Token Stats", "ts-title"), True, True, 0)
         seg = Gtk.Box(spacing=2)
         self.page_btns = {}
-        for key, text in (("limits", "Limits"), ("usage", "Usage")):
+        for key, text in (("limits", "Limits"), ("usage", "Verbrauch")):
             b = Gtk.ToggleButton(label=text); b.get_style_context().add_class("ts-seg")
             b.connect("clicked", self.on_page, key); seg.pack_start(b, False, False, 0)
             self.page_btns[key] = b
@@ -345,7 +397,7 @@ class Popup(Gtk.Window):
         foot.pack_start(self.status, True, True, 0)
         rb = Gtk.Button(label="⟳"); rb.connect("clicked", lambda *_: app.refresh())
         foot.pack_end(rb, False, False, 0)
-        qb = Gtk.Button(label="Quit"); qb.connect("clicked", lambda *_: Gtk.main_quit())
+        qb = Gtk.Button(label="Beenden"); qb.connect("clicked", lambda *_: Gtk.main_quit())
         foot.pack_end(qb, False, False, 0)
         outer.pack_end(foot, False, False, 0)
         self.page_btns["limits"].set_active(True)
@@ -393,14 +445,14 @@ class Popup(Gtk.Window):
             c.destroy()
         a = self.app
         note = f"  ·  ⚠ {a.note}" if a.note else ""
-        self.status.set_text((f"updated {a.updated:%H:%M}" if a.updated else "loading…") + note)
+        self.status.set_text((f"Stand {a.updated:%H:%M}" if a.updated else "lädt …") + note)
         (self.render_limits if self.page == "limits" else self.render_usage)()
         self.body.show_all()
 
     def render_limits(self):
         info = self.app.info
         if not info:
-            self.body.pack_start(label("Loading…", "ts-dim"), False, False, 0)
+            self.body.pack_start(label("Lädt …", "ts-dim"), False, False, 0)
             return
         worst = max((r["pct"] for r in info["limits"]), default=0)
         h = Gtk.Box(spacing=8)
@@ -429,11 +481,11 @@ class Popup(Gtk.Window):
             if elapsed is not None:
                 gap = (r["pct"] / 100 - elapsed) * r["window"]
                 if abs(gap) < r["window"] * 0.02:
-                    txt, col = "on pace", None
+                    txt, col = "im Takt", None
                 elif gap > 0:
-                    txt, col = f"{dur(gap)} ahead", hexc(color_for(r["pct"]))
+                    txt, col = f"{dur(gap)} vorgegriffen", hexc(color_for(r["pct"]))
                 else:
-                    txt, col = f"{dur(-gap)} unused", hexc(color_for(r["pct"]))
+                    txt, col = f"{dur(-gap)} ungenutzt", hexc(color_for(r["pct"]))
                 l = label(txt, "ts-dim")
                 bottom.pack_end(markup(l, col) if col else l, False, False, 0)
             box.pack_start(bottom, False, False, 0)
@@ -454,7 +506,7 @@ class Popup(Gtk.Window):
             h.pack_start(label(info["plan"], "ts-dim ts-mono"), False, False, 0)
         self.body.pack_start(h, False, False, 0)
 
-        ranges = [("1d", "Today", 1), ("7d", "7 days", 7), ("30d", "30 days", 30), ("month", "This month", None)]
+        ranges = [("1d", "Heute", 1), ("7d", "7 Tage", 7), ("30d", "30 Tage", 30), ("month", "Monat", None)]
         rbox = Gtk.Box(spacing=4)
         for key, text, _ in ranges:
             b = Gtk.ToggleButton(label=text); b.set_active(key == self.range)
@@ -483,8 +535,8 @@ class Popup(Gtk.Window):
                 total_val += v
 
         cards = Gtk.Box(spacing=10, homogeneous=True)
-        for title, big, small in (("TOKENS", fmt(total), f"{fmt(cache)} of which cache"),
-                                  ("API COMPARISON VALUE", f"{total_val:,.2f} $", "at list prices")):
+        for title, big, small in (("TOKENS", fmt(total), f"{fmt(cache)} davon Cache"),
+                                  ("API-VERGLEICHSWERT", f"{total_val:,.2f} $", "zu Listenpreisen")):
             card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
             card.get_style_context().add_class("ts-card")
             card.pack_start(label(title, "ts-dim"), False, False, 0)
@@ -500,21 +552,21 @@ class Popup(Gtk.Window):
             row = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
             top = Gtk.Box()
             top.pack_start(label(model_name(model), "ts-h"), False, False, 0)
-            top.pack_end(label(f"{v:,.2f} $" if v is not None else "n/a", "ts-h"), False, False, 0)
+            top.pack_end(label(f"{v:,.2f} $" if v is not None else "k. A.", "ts-h"), False, False, 0)
             row.pack_start(top, False, False, 0)
-            row.pack_start(label(f"{fmt(c[0])} in · {fmt(c[1])} out · {fmt(c[2] + c[3] + c[4])} cache", "ts-dim"),
+            row.pack_start(label(f"{fmt(c[0])} Input · {fmt(c[1])} Output · {fmt(c[2] + c[3] + c[4])} Cache", "ts-dim"),
                            False, False, 0)
             self.body.pack_start(row, False, False, 0)
             self.body.pack_start(Gtk.Separator(), False, False, 0)
         tot = Gtk.Box()
-        tot.pack_start(label(f"{n} days · {fmt(total)} tokens" if n > 1 else f"Today · {fmt(total)} tokens", "ts-h"),
+        tot.pack_start(label(f"{n} Tage · {fmt(total)} Tokens" if n > 1 else f"Heute · {fmt(total)} Tokens", "ts-h"),
                        False, False, 0)
         tot.pack_end(label(f"{total_val:,.2f} $", "ts-h"), False, False, 0)
         self.body.pack_start(tot, False, False, 0)
-        asof = f" (as of {PRICES_AS_OF})" if PRICES_AS_OF else ""
-        foot = ("Local token counts from the session logs × list price" + asof + ", incl. cache rates. "
-                "No billing data, only what the same usage would cost via the API."
-                + (" Some models are missing from the price table." if unpriced else ""))
+        asof = f" (Stand {PRICES_AS_OF})" if PRICES_AS_OF else ""
+        foot = ("Lokal gezählte Tokens aus den Sitzungsprotokollen × Listenpreis" + asof + ", inkl. Cache-Tarife. "
+                "Keine Abrechnungsdaten – nur, was derselbe Verbrauch über die API gekostet hätte."
+                + (" Modelle ohne Listenpreis sind nicht eingerechnet." if unpriced else ""))
         self.body.pack_start(label(foot, "ts-dim", wrap=True), False, False, 0)
 
 
@@ -633,14 +685,7 @@ class App:
         return True
 
     def _work(self):
-        note, info = "", self.info
-        try:
-            info = fetch_limits()
-        except urllib.error.HTTPError as e:
-            note = ("rate-limited, showing last values" if e.code == 429
-                    else "login expired: run `claude`" if e.code == 401 else f"HTTP {e.code}")
-        except Exception as e:
-            note = f"offline ({type(e).__name__})"
+        info, note = limits_with_cache()
         try:
             usage = collect_usage()
         except Exception:

@@ -37,7 +37,7 @@ Run it from a checkout, because it reads the price table from `Sources/`. For au
   window.
 - Plasma reports the icon position in physical pixels and sends every click twice. The script
   converts with the scale from `kscreen-doctor -j` and ignores calls within 400 ms.
-- Refreshes every 5 minutes. On HTTP 429 the last values stay and a note appears.
+- Refreshes every 5 minutes, and never more often than every 300 s: the refresh button and a restart use the cache (`~/.cache/tokenstats/limits.json`, shared with the Plasma widget) while the last request is younger. On HTTP 429 the last values stay and the note shows when the next request is allowed (`Retry-After`).
 
 ## Limits of this version
 
