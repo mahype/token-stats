@@ -133,7 +133,8 @@ Oberfläche bleibt beim Hinzufügen unberührt.
 
 ## Voraussetzungen
 
-- macOS 14 (Sonoma) oder neuer, Apple Silicon oder Intel
+- macOS 14 (Sonoma) oder neuer, Apple Silicon oder Intel – oder Windows 10/11
+  (siehe [Windows](#windows))
 - Claude Code, Codex, die Antigravity-CLI (`agy`) und/oder Ollama (`ollama signin`),
   mindestens einmal angemeldet
 
@@ -186,7 +187,7 @@ gemergt sind, steht Linux hier gleichrangig neben macOS und Windows.
 
 ## Entfernen
 
-**Bei Anmeldung starten** ausschalten, die App beenden, dann:
+Unter macOS: **Bei Anmeldung starten** ausschalten, die App beenden, dann:
 
 ```bash
 rm -rf "/Applications/Token Stats.app"
@@ -194,7 +195,9 @@ rm -rf ~/Library/Application\ Support/TokenStats   # letzter Stand und Verbrauch
 defaults delete de.mahype.TokenStats              # Einstellungen
 ```
 
-Deine Anmeldungen bei Claude Code, Codex, Antigravity und Ollama bleiben unberührt.
+Unter Windows: App beenden, `TokenStats.exe` und den Ordner `%LOCALAPPDATA%\TokenStats`
+löschen (siehe [`windows/`](windows/README.md)). Deine Anmeldungen bei Claude Code, Codex,
+Antigravity und Ollama bleiben unberührt.
 
 ## Wie aktuell sind die Zahlen?
 
