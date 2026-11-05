@@ -15,8 +15,8 @@ PROJECTS = f"{HOME}/.claude/projects"
 CACHE_DIR = f"{HOME}/.cache/tokenstats"
 LIMITS_CACHE = f"{CACHE_DIR}/limits.json"
 # Der Usage-Endpunkt ist hart rate-limitiert: höchstens eine Abfrage alle 300 s, auch bei Klick auf
-# „Aktualisieren“ oder nach einem Neustart (5 s Toleranz für den Timer). Der Stand liegt im Cache.
-MIN_INTERVAL_S = 295
+# „Aktualisieren“ oder nach einem Neustart. Der Stand liegt im Cache; main.qml fragt alle 305 s.
+MIN_INTERVAL_S = 300
 WINDOWS = {"session": 5 * 3600, "weekly_all": 7 * 86400, "weekly_scoped": 7 * 86400}
 
 
@@ -25,8 +25,11 @@ def plan_label(c):
     return f"{c.get('subscriptionType', '').title()}{f' {m.group(1)}×' if m else ''}"
 
 
-def fetch_limits():
-    c = json.load(open(CREDS))["claudeAiOauth"]
+def load_creds():
+    return json.load(open(CREDS))["claudeAiOauth"]
+
+
+def fetch_limits(c):
     req = urllib.request.Request(
         "https://api.anthropic.com/api/oauth/usage",
         headers={"Authorization": f"Bearer {c['accessToken']}", "anthropic-beta": "oauth-2025-04-20",
@@ -138,14 +141,19 @@ def read_cache():
         d = json.load(open(LIMITS_CACHE))
     except (OSError, ValueError):
         return {}
-    # ältere Fassung: nur der Stand, ohne Zeitstempel
-    return d if isinstance(d, dict) and "info" in d else {"info": d, "attemptedAt": 0}
+    if not isinstance(d, dict):
+        return {}
+    # ältere Fassung: nur der Stand (mit „limits“), ohne Zeitstempel
+    return {"info": d, "attemptedAt": 0} if "limits" in d else d
 
 
 def write_cache(cache):
     try:
         os.makedirs(CACHE_DIR, exist_ok=True)
-        json.dump(cache, open(LIMITS_CACHE, "w"))
+        tmp = f"{LIMITS_CACHE}.{os.getpid()}.tmp"   # atomar ersetzen, damit kein Leser eine halbe Datei sieht
+        with open(tmp, "w") as f:
+            json.dump(cache, f)
+        os.replace(tmp, LIMITS_CACHE)
     except OSError:
         pass
 
@@ -162,19 +170,25 @@ def limits_with_cache():
     retry_at = cache.get("retryAt", 0)
     if now < retry_at:
         return info, f"Abfrage pausiert (Rate-Limit) · wieder ab {hhmm(retry_at)}"
-    if info and now - cache.get("attemptedAt", 0) < MIN_INTERVAL_S:
+    if now - cache.get("attemptedAt", 0) < MIN_INTERVAL_S:
         return info, cache.get("error")
-    cache.update({"attemptedAt": now, "retryAt": 0, "error": None})
     try:
-        info = fetch_limits()
-        cache["info"] = info
+        creds = load_creds()
+    except (OSError, ValueError, KeyError):
+        # keine Anfrage an den Endpunkt, also auch keine Drosselung
+        return info, "Nicht angemeldet: `claude` starten"
+    # Versuch vor der Anfrage festhalten, damit parallele Aufrufe (Plasma, GTK) nicht zugleich abfragen
+    cache.update({"attemptedAt": now, "retryAt": 0, "error": None})
+    write_cache(cache)
+    try:
+        cache["info"] = fetch_limits(creds)
     except urllib.error.HTTPError as e:
         if e.code == 429:
             try:
                 wait = int(e.headers.get("Retry-After", ""))
             except ValueError:
                 wait = 0
-            cache["retryAt"] = now + max(wait, MIN_INTERVAL_S)
+            cache["retryAt"] = now + min(max(wait, MIN_INTERVAL_S), 86400)
             cache["error"] = f"Abfrage pausiert (Rate-Limit) · wieder ab {hhmm(cache['retryAt'])}"
         else:
             cache["error"] = "Anmeldung abgelaufen: `claude` starten" if e.code == 401 else f"HTTP {e.code}"

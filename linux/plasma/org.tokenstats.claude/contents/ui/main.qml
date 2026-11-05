@@ -36,7 +36,7 @@ PlasmoidItem {
         id: source
         engine: "executable"
         connectedSources: [root.command]
-        interval: 300000   // limits endpoint is rate limited, 5 minutes like the macOS app
+        interval: 305000   // limits endpoint is rate limited: 300 s minimum (backend.py), a little more for the timer
         onNewData: function (sourceName, data) {
             if (!data["stdout"]) return
             try {

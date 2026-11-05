@@ -34,10 +34,11 @@ PROJECTS = f"{HOME}/.claude/projects"
 ICON_DIR = f"{HOME}/.cache/tokenstats"
 INTERVAL_S = 300
 # Der Usage-Endpunkt ist hart rate-limitiert: höchstens eine Abfrage alle 300 s, auch bei Klick auf
-# „Aktualisieren“ oder nach einem Neustart (5 s Toleranz für den Timer). Der Stand liegt im Cache,
+# „Aktualisieren“ oder nach einem Neustart. Der Stand liegt im Cache,
 # den sich diese Fassung mit dem Plasma-Widget teilt.
-MIN_INTERVAL_S = 295
+MIN_INTERVAL_S = 300
 LIMITS_CACHE = f"{ICON_DIR}/limits.json"
+_LIMITS_LOCK = threading.Lock()
 
 GREEN, YELLOW, RED = (0.30, 0.75, 0.50), (0.89, 0.66, 0.24), (0.85, 0.30, 0.30)
 BLUE, BLUE_DIM = (0.0, 0.57, 1.0), (0.06, 0.37, 0.64)
@@ -76,8 +77,7 @@ def plan_label(c):
     return f"{c.get('subscriptionType', '').title()}{f' {m.group(1)}×' if m else ''}"
 
 
-def fetch_limits():
-    c = load_creds()
+def fetch_limits(c):
     req = urllib.request.Request(
         "https://api.anthropic.com/api/oauth/usage",
         headers={"Authorization": f"Bearer {c['accessToken']}", "anthropic-beta": "oauth-2025-04-20",
@@ -109,40 +109,56 @@ def read_cache():
         d = json.load(open(LIMITS_CACHE))
     except (OSError, ValueError):
         return {}
-    # ältere Fassung: nur der Stand, ohne Zeitstempel
-    return d if isinstance(d, dict) and "info" in d else {"info": d, "attemptedAt": 0}
+    if not isinstance(d, dict):
+        return {}
+    # ältere Fassung: nur der Stand (mit „limits“), ohne Zeitstempel
+    return {"info": d, "attemptedAt": 0} if "limits" in d else d
 
 
 def write_cache(cache):
     try:
         os.makedirs(ICON_DIR, exist_ok=True)
-        json.dump(cache, open(LIMITS_CACHE, "w"))
+        tmp = f"{LIMITS_CACHE}.{os.getpid()}.tmp"   # atomar ersetzen, damit kein Leser eine halbe Datei sieht
+        with open(tmp, "w") as f:
+            json.dump(cache, f)
+        os.replace(tmp, LIMITS_CACHE)
     except OSError:
         pass
 
 
 def limits_with_cache():
+    with _LIMITS_LOCK:   # zwei schnelle Klicks fragen nicht doppelt ab
+        return _limits_with_cache()
+
+
+def _limits_with_cache():
     """-> (Stand, Fehlertext). Fragt nur ab, wenn die letzte Abfrage lang genug her ist."""
     now = time.time()
     cache = read_cache()
     info = cache.get("info")
     retry_at = cache.get("retryAt", 0)
-    paused = lambda ts: f"Abfrage pausiert (Rate-Limit) · wieder ab {datetime.fromtimestamp(ts):%H:%M}"
     if now < retry_at:
-        return info, paused(retry_at)
-    if info and now - cache.get("attemptedAt", 0) < MIN_INTERVAL_S:
+        return info, f"Abfrage pausiert (Rate-Limit) · wieder ab {datetime.fromtimestamp(retry_at):%H:%M}"
+    if now - cache.get("attemptedAt", 0) < MIN_INTERVAL_S:
         return info, cache.get("error")
-    cache.update({"attemptedAt": now, "retryAt": 0, "error": None})
     try:
-        cache["info"] = fetch_limits()
+        creds = load_creds()
+    except (OSError, ValueError, KeyError):
+        # keine Anfrage an den Endpunkt, also auch keine Drosselung
+        return info, "Nicht angemeldet: `claude` starten"
+    # Versuch vor der Anfrage festhalten, damit parallele Aufrufe (Plasma, GTK) nicht zugleich abfragen
+    cache.update({"attemptedAt": now, "retryAt": 0, "error": None})
+    write_cache(cache)
+    try:
+        cache["info"] = fetch_limits(creds)
     except urllib.error.HTTPError as e:
         if e.code == 429:
             try:
                 wait = int(e.headers.get("Retry-After", ""))
             except ValueError:
                 wait = 0
-            cache["retryAt"] = now + max(wait, MIN_INTERVAL_S)
-            cache["error"] = paused(cache["retryAt"])
+            cache["retryAt"] = now + min(max(wait, MIN_INTERVAL_S), 86400)
+            cache["error"] = f"Abfrage pausiert (Rate-Limit) · wieder ab {datetime.fromtimestamp(cache['retryAt']):%H:%M}"
         else:
             cache["error"] = "Anmeldung abgelaufen: `claude` starten" if e.code == 401 else f"HTTP {e.code}"
     except Exception as e:
@@ -671,7 +687,7 @@ class App:
         self.popup = Popup(self)
         self.tray = Tray(self.toggle)
         self.refresh()
-        GLib.timeout_add_seconds(INTERVAL_S, self.refresh)
+        GLib.timeout_add_seconds(INTERVAL_S + 5, self.refresh)   # knapp über dem 300-s-Minimum
 
     def toggle(self, x=0, y=10 ** 6):
         if self.popup.get_visible():
