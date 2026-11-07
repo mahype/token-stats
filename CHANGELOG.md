@@ -3,6 +3,16 @@
 Jede Version hat einen Abschnitt `## X.Y.Z`. `make publish` übernimmt ihn als Text für
 das GitHub-Release und für den Update-Dialog in der App.
 
+## 0.4.0
+
+- **Widgets für den Mac:** Zwei neue Widgets für Schreibtisch und Mitteilungszentrale zeigen
+  Verbrauch (Heute, 7 Tage, 30 Tage, Abrechnungsmonat; je Anbieter wählbar) und Limits mit
+  Reset-Zeit und Pace-Marke, ohne dass du das Popover öffnen musst. Ein Klick springt auf die
+  passende Seite. Die Widgets lesen nur den Stand, den die App schreibt, und fragen selbst
+  nichts ab; das Abfrageintervall bleibt bei mindestens 300 s.
+- **Linux:** Tray- und Plasma-Widgets für Claude-Limits und Verbrauch (`linux/`). Sie fragen
+  höchstens alle 300 s ab, beachten Retry-After und zeigen bei Fehlern den letzten Stand.
+
 ## 0.3.3
 
 - **Claude wieder abrufbar:** Anthropic liefert das Fünf-Stunden-Fenster nicht mehr mit,

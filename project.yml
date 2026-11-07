@@ -21,7 +21,7 @@ settings:
     CODE_SIGN_STYLE: Manual
     DEVELOPMENT_TEAM: ""
     ENABLE_HARDENED_RUNTIME: YES
-    MARKETING_VERSION: "0.3.3"
+    MARKETING_VERSION: "0.4.0"
     # App Group für die Widgets (Issue #10), mit Team-ID-Präfix: macOS lässt nur Apps desselben
     # Teams an den Container, und `group.`-Kennungen verlangen ein Provisioning-Profil. Darum folgt
     # die Kennung der Signatur: Sven → 2GA7DQ3P3Z.…, ein Debug-Build mit eigenem Zertifikat →
