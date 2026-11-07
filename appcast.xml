@@ -5,6 +5,18 @@
     <link>https://mahype.github.io/token-stats/appcast.xml</link>
     <language>de</language>
     <item>
+      <title>Version 0.4.0</title>
+      <pubDate>Sat, 07 Nov 2026 20:49:57 GMT</pubDate>
+      <sparkle:version>0.4.0</sparkle:version>
+      <sparkle:shortVersionString>0.4.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description>&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Widgets für den Mac:&lt;/strong&gt; Zwei neue Widgets für Schreibtisch und Mitteilungszentrale zeigen Verbrauch (Heute, 7 Tage, 30 Tage, Abrechnungsmonat; je Anbieter wählbar) und Limits mit Reset-Zeit und Pace-Marke, ohne dass du das Popover öffnen musst. Ein Klick springt auf die passende Seite. Die Widgets lesen nur den Stand, den die App schreibt, und fragen selbst nichts ab; das Abfrageintervall bleibt bei mindestens 300 s.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Linux:&lt;/strong&gt; Tray- und Plasma-Widgets für Claude-Limits und Verbrauch (&lt;code&gt;linux/&lt;/code&gt;). Sie fragen höchstens alle 300 s ab, beachten Retry-After und zeigen bei Fehlern den letzten Stand.&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <enclosure url="https://github.com/mahype/token-stats/releases/download/v0.4.0/Token-Stats-0.4.0.dmg" length="3217759" type="application/octet-stream" sparkle:edSignature="Gd2bdpVjvjXYRifeO4sWzdQmuS0AqAW4nDeKaLjweAzrXQPxx/hqNSas9SnznlMCYm612S03KjkVQMa628hWDw==" />
+    </item>
+    <item>
       <title>Version 0.3.3</title>
       <pubDate>Thu, 05 Nov 2026 08:20:40 GMT</pubDate>
       <sparkle:version>0.3.3</sparkle:version>
