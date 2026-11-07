@@ -1,6 +1,7 @@
 #if DEBUG
 import AppKit
 import SwiftUI
+import TokenStatsCore
 
 /// `make screenshots`: rendert Popover und Menüleisten-Symbol als PNG für die README.
 ///
@@ -44,6 +45,7 @@ struct Screenshots {
             try await render(card(popover(selected: "ollama")), appearance, to: file("limits-ollama"))
             try await render(card(popover(selected: "claude", usage: true)), appearance, to: file("usage"))
             try await render(menuBar, appearance, to: file("menubar"))
+            try await render(widgets, appearance, to: file("widgets"))
         }
     }
 
@@ -90,6 +92,33 @@ struct Screenshots {
         .padding(1)
     }
 
+    /// Die Widgets „Verbrauch“ und „Limits“ in Klein, Mittel und Groß, mit denselben Demo-Werten.
+    private var widgets: some View {
+        let snapshot = DemoData.widgetSnapshot(now: .now, prices: consumption.prices)
+        func tile(_ content: some View, width: CGFloat, height: CGFloat) -> some View {
+            content
+                .padding(14)
+                .frame(width: width, height: height)
+                .background(RoundedRectangle(cornerRadius: 16).fill(Color(nsColor: .windowBackgroundColor)))
+                .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.separator))
+        }
+        return VStack(spacing: 16) {
+            HStack(alignment: .top, spacing: 16) {
+                tile(UsageWidgetView(snapshot: snapshot, provider: nil, period: .today, size: .small), width: 160, height: 160)
+                tile(UsageWidgetView(snapshot: snapshot, provider: nil, period: .week, size: .medium), width: 340, height: 160)
+            }
+            HStack(alignment: .top, spacing: 16) {
+                tile(LimitsWidgetView(snapshot: snapshot, provider: nil, size: .small), width: 160, height: 160)
+                tile(LimitsWidgetView(snapshot: snapshot, provider: "claude", size: .medium), width: 340, height: 160)
+            }
+            tile(UsageWidgetView(snapshot: snapshot, provider: "claude", period: .month, size: .large), width: 516, height: 330)
+        }
+        .padding(20)
+        .background(Color(nsColor: .underPageBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(1)
+    }
+
     // MARK: Zeichnen
 
     /// Zeichnet in 3× als Vektor, unabhängig vom Bildschirm – scharf auch in der halb breiten
@@ -112,106 +141,12 @@ struct Screenshots {
         print(url.lastPathComponent)
     }
 
-    // MARK: Demo-Werte
+    // MARK: Demo-Werte – liegen in TokenStatsCore (DemoData), weil auch die Widget-Vorschau sie zeigt.
 
-    /// Ein Stand, der alle Zustände zeigt: grün, gelb, Pace vorgegriffen, ungenutzt und im Takt.
-    static func demoSnapshots(now: Date) -> [String: ProviderSnapshot] {
-        let hour: TimeInterval = 3600
-        let week = 7 * 24 * hour
-        let weekReset = now.addingTimeInterval(2.6 * 24 * hour)
-        return [
-            "claude": ProviderSnapshot(
-                account: AccountInfo(name: "Demo", plan: "Max 20×"),
-                windows: [
-                    LimitWindow(id: "session", name: "Session", scopeNote: "5 h", percent: 0.42,
-                                resetsAt: now.addingTimeInterval(2.2 * hour), windowLength: 5 * hour),
-                    LimitWindow(id: "week", name: "Woche", scopeNote: "7 d, alle Modelle", percent: 0.82,
-                                resetsAt: weekReset, windowLength: week),
-                    LimitWindow(id: "model-opus", name: "Opus", scopeNote: "Wochenlimit", percent: 0.64,
-                                resetsAt: weekReset, windowLength: week),
-                ],
-                extras: [ExtraValue(id: "extra", text: "Extra 12,40 $ / 50,00 $")],
-                fetchedAt: now.addingTimeInterval(-60)
-            ),
-            "codex": ProviderSnapshot(
-                account: AccountInfo(name: "Demo", plan: "Pro"),
-                windows: [
-                    LimitWindow(id: "primary", name: "Woche", scopeNote: "7 d", percent: 0.37,
-                                resetsAt: now.addingTimeInterval(4.1 * 24 * hour), windowLength: week),
-                    LimitWindow(id: "review", name: "Code-Review", scopeNote: "7 d", percent: 0.08,
-                                resetsAt: now.addingTimeInterval(4.1 * 24 * hour), windowLength: week),
-                ],
-                extras: [ExtraValue(id: "credits", text: "Credits unbegrenzt")],
-                fetchedAt: now.addingTimeInterval(-60)
-            ),
-            "antigravity": ProviderSnapshot(
-                account: AccountInfo(name: "Demo", plan: "Google AI Plus"),
-                windows: [
-                    LimitWindow(id: "gemini-weekly", name: "Gemini", scopeNote: "Wochenlimit", percent: 0.35,
-                                resetsAt: now.addingTimeInterval(5.3 * 24 * hour), windowLength: week),
-                    LimitWindow(id: "3p-weekly", name: "Claude & GPT", scopeNote: "Wochenlimit", percent: 0.12,
-                                resetsAt: now.addingTimeInterval(5.3 * 24 * hour), windowLength: week),
-                ],
-                extras: [],
-                fetchedAt: now.addingTimeInterval(-60)
-            ),
-            "ollama": ProviderSnapshot(
-                account: AccountInfo(name: "Demo", plan: "Pro"),
-                windows: [
-                    LimitWindow(id: "session", name: "Session", scopeNote: "5 h", percent: 0.18,
-                                resetsAt: nil, windowLength: nil),
-                    LimitWindow(id: "weekly", name: "Woche", scopeNote: "7 d", percent: 0.41,
-                                resetsAt: nil, windowLength: nil),
-                ],
-                extras: [
-                    ExtraValue(id: "requests-glm-5.3", text: "glm-5.3 · 312 Anfragen"),
-                    ExtraValue(id: "requests-kimi-k2.6", text: "kimi-k2.6 · 48 Anfragen"),
-                ],
-                fetchedAt: now.addingTimeInterval(-60)
-            ),
-        ]
-    }
+    static func demoSnapshots(now: Date) -> [String: ProviderSnapshot] { DemoData.snapshots(now: now) }
 
-    /// 30 Tage Verbrauch mit Wochenrhythmus; Cache-Anteil wie bei Claude Code üblich um 80 %.
-    static func demoUsage(now: Date, billingDay: Int, prices: PriceTable,
-                          calendar: Calendar = .current) -> [String: [UsagePeriod: UsageSummary]] {
-        // Tagesfaktoren, heute zuletzt; die Nullen sind freie Tage.
-        let pattern: [Double] = [0.9, 1.2, 0.7, 1.4, 0.3, 0, 0.5, 1.1, 1.3, 0.8, 1.6, 0.9, 0.2, 0,
-                                 1.0, 0.6, 1.5, 1.2, 0.7, 0.4, 0.1, 1.3, 0.9, 1.1, 1.8, 1.0, 0, 0.6, 1.4, 0.8]
-        let models: [String: [(model: String, share: Double, perDay: TokenCounts)]] = [
-            "claude": [
-                ("claude-opus-5-5", 0.7, TokenCounts(input: 9_000, output: 310_000, cacheWrite5m: 1_900_000,
-                                                     cacheWrite1h: 600_000, cacheRead: 38_000_000)),
-                ("claude-sonnet-5", 0.3, TokenCounts(input: 14_000, output: 240_000, cacheWrite5m: 1_400_000,
-                                                     cacheWrite1h: 0, cacheRead: 21_000_000)),
-            ],
-            "codex": [
-                ("gpt-5.6-sol", 1, TokenCounts(input: 1_100_000, output: 180_000, cacheRead: 9_500_000)),
-            ],
-        ]
-        let today = calendar.startOfDay(for: now)
-        func scaled(_ counts: TokenCounts, _ factor: Double) -> TokenCounts {
-            func s(_ value: Int) -> Int { Int(Double(value) * factor) }
-            return TokenCounts(input: s(counts.input), output: s(counts.output), cacheWrite5m: s(counts.cacheWrite5m),
-                               cacheWrite1h: s(counts.cacheWrite1h), cacheRead: s(counts.cacheRead))
-        }
-
-        return models.mapValues { lines in
-            let rows = pattern.enumerated().flatMap { index, factor in
-                let day = calendar.date(byAdding: .day, value: index - (pattern.count - 1), to: today)!
-                return lines.map { line in
-                    UsageLedger.Row(day: UsageSummary.key(day, calendar), model: line.model,
-                                    counts: scaled(line.perDay, factor * line.share * 2))
-                }
-            }
-            return Dictionary(uniqueKeysWithValues: UsagePeriod.allCases.map { period in
-                let range = period.range(now: now, billingDay: billingDay, calendar: calendar)
-                let from = UsageSummary.key(range.from, calendar), through = UsageSummary.key(range.through, calendar)
-                let inRange = rows.filter { $0.day >= from && $0.day <= through }
-                return (period, UsageSummary.build(rows: inRange, from: range.from, through: range.through,
-                                                   prices: prices, calendar: calendar))
-            })
-        }
+    static func demoUsage(now: Date, billingDay: Int, prices: PriceTable) -> [String: [UsagePeriod: UsageSummary]] {
+        DemoData.usage(now: now, billingDay: billingDay, prices: prices)
     }
 }
 #endif

@@ -1,4 +1,5 @@
 import AppKit
+import TokenStatsCore
 
 // Agent-App ohne Dock-Icon (LSUIElement); alles hängt am Menüleisten-Symbol.
 MainActor.assumeIsolated {

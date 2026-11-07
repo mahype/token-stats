@@ -1,6 +1,7 @@
 import CryptoKit
 import Foundation
 import Testing
+import TokenStatsCore
 @testable import TokenStats
 
 // Antwortformen nach den Fixtures von claudebar/codexbar.

@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import TokenStatsCore
 
 /// Ollama Cloud: signierte Anfrage mit dem Schlüssel `~/.ollama/id_ed25519`
 /// → `ollama.com/api/balance` (Limits/Guthaben), `/api/usage` (Statistik) und `/api/me` (Plan).

@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import Sparkle
+import TokenStatsCore
 
 /// Hält Sparkle für die Laufzeit der App (SPEC §7). Ohne diese Referenz stoppen die
 /// Prüfungen im Hintergrund stillschweigend.

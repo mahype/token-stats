@@ -1,4 +1,5 @@
 import Foundation
+import TokenStatsCore
 
 /// Claude Code: OAuth-Token aus Schlüsselbund bzw. `~/.claude/.credentials.json`
 /// → `api.anthropic.com/api/oauth/usage`.
