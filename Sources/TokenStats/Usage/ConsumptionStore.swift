@@ -9,6 +9,8 @@ final class ConsumptionStore {
     private(set) var isScanning = false
     private(set) var hasScannedOnce = false
     private(set) var failure: String?
+    /// Ersparnis durch rtk je Zeitraum, über alle Clients; `nil` = rtk nicht installiert oder nicht lesbar.
+    private(set) var rtk: [UsagePeriod: RtkSummary]?
 
     let prices = PriceTable.bundled
     private let ledger: UsageLedger?
@@ -44,9 +46,10 @@ final class ConsumptionStore {
 
     #if DEBUG
     /// Nur für Screenshots: feste Zusammenfassungen, ohne die Logs zu lesen.
-    func showDemo(_ demo: [String: [UsagePeriod: UsageSummary]]) {
+    func showDemo(_ demo: [String: [UsagePeriod: UsageSummary]], rtk demoRtk: [UsagePeriod: RtkSummary]? = nil) {
         timer?.invalidate()
         summaries = demo
+        rtk = demoRtk
         hasScannedOnce = true
     }
     #endif
@@ -72,7 +75,9 @@ final class ConsumptionStore {
                     )
                 }
             }
+            let rtkDays = await RtkReader.load()
             summaries = result
+            rtk = rtkDays.map { RtkSavings.summaries($0, billingDay: billingDay) }
             isScanning = false
             hasScannedOnce = true
         }

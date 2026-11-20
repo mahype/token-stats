@@ -79,6 +79,8 @@ sealed class UsageView(
         models.Children.Add(total);
         yield return models;
 
+        if (consumption.Rtk is { } rtk && rtk.TryGetValue(period, out var savings)) yield return RtkBlock(savings);
+
         yield return Ui.Wrapped(Footnote(summary), 10.5, p.Secondary);
     }
 
@@ -111,6 +113,37 @@ sealed class UsageView(
             BorderThickness = new Thickness(1),
             Padding = new Thickness(11, 9, 11, 9),
             Child = Ui.Column(2, caption, Ui.Text(value, 17, p.Primary, FontWeights.Bold), Ui.Text(detail, 10.5, p.Secondary)),
+        };
+    }
+
+    /// <summary>
+    /// Ersparnis durch rtk im gewählten Zeitraum. rtk kennt den auslösenden Agent nicht,
+    /// darum steht derselbe Block in jedem Tab und ohne Geldbetrag.
+    /// </summary>
+    Border RtkBlock(RtkSummary savings)
+    {
+        var caption = Ui.Text("RTK · alle Clients".ToUpper(Format.Culture), 10, p.Secondary);
+        UIElement[] lines;
+        if (savings.Commands == 0)
+        {
+            lines = [caption, Ui.Text("Keine gefilterten Befehle in diesem Zeitraum.", 11.5, p.Secondary)];
+        }
+        else
+        {
+            var saved = $"{Format.Tokens(savings.SavedTokens)} Tokens gespart";
+            if (savings.SavedFraction is { } fraction) saved += $" · {Format.Percent(fraction)}";
+            lines = [caption, Ui.Text(saved, 13, p.Primary, FontWeights.Bold),
+                     Ui.Text($"{Format.Number(savings.Commands, 0)} Befehle gefiltert", 10.5, p.Secondary)];
+        }
+        return new Border
+        {
+            CornerRadius = new CornerRadius(8),
+            Background = p.Control,
+            BorderBrush = p.Separator,
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(11, 9, 11, 9),
+            Child = Ui.Column(2, lines),
+            ToolTip = "Aus rtk gain – Befehle aller Clients auf diesem Rechner",
         };
     }
 

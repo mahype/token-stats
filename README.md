@@ -44,6 +44,9 @@ keine Cloud, keine Telemetrie.
   in Zeit umgerechnet, z. B. `1 Tag vorgegriffen` oder `4 Tage ungenutzt`.
 - **Verbrauch** für Heute, 7 Tage, 30 Tage oder den Abrechnungsmonat: Tokens mit
   getrennt ausgewiesenem Cache-Anteil, Tagesdiagramm und Aufschlüsselung je Modell.
+- **rtk-Ersparnis:** Ist [rtk](https://github.com/rtk-ai/rtk) installiert, zeigt die Seite
+  „Verbrauch“ für denselben Zeitraum, wie viele Tokens rtk eingespart hat – über alle
+  Clients, so wie `rtk gain` es meldet.
 - **API-Vergleichswert** aus Tokenzahl × Listenpreis, mit mitgelieferter Preistabelle.
   Abschaltbar, wenn du nur Tokens sehen willst.
 - **CSV kopieren:** Der angezeigte Zeitraum landet mit einem Klick als CSV in der

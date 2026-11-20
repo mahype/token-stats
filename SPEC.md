@@ -115,6 +115,14 @@ Reset Mi 09:00                      1 Tag vorgegriffen
   den Einstellungen (Standard: 1.; in kürzeren Monaten gilt der Monatsletzte). „Abo x $ /
   Monat“ nur für bekannte Pläne (Claude Pro/Max 5×/Max 20×, Codex Plus/Pro).
   Die Modellzeile zeigt „Cache“ als Summe; die Aufteilung Schreiben/Lesen steht im Tooltip.
+- **RTK-Block (Issue #15):** Ist rtk installiert, steht unter der Modell-Liste „RTK · alle
+  Clients“ mit gesparten Tokens, Anteil und Zahl der gefilterten Befehle im gewählten
+  Zeitraum; ohne Befehle im Zeitraum ein Hinweis, ohne rtk kein Block. rtk hält nicht fest,
+  welcher Agent einen Befehl ausgelöst hat, darum steht in Claude und Codex derselbe Block.
+  Kein Geldbetrag: Was eine gesparte Ausgabe wert ist, hängt zu stark von Modell und Cache
+  ab. Quelle ist `rtk gain --format json --daily`, nicht rtks `history.db` – deren Schema
+  ist undokumentiert, und die Rohsummen enthalten Einträge, die `rtk gain` nicht mitzählt.
+  Die Tagesgrenzen sind die von rtk. Nicht im CSV-Export und nicht in den Widgets.
 - **Cache getrennt ausweisen** ist Pflicht: bei Claude Code sind oft ~80 % des Volumens
   Cache-Reads zu einem Bruchteil des Input-Preises. Eine nackte Gesamt-Tokenzahl führt
   in die Irre.
@@ -177,6 +185,7 @@ Auf dem Zielrechner bereits vorhanden: `~/.claude`, `~/.codex`, `~/.gemini`,
 | **GitHub Copilot** | Premium-Requests/Monat, Chat-Quota | `gh`-Token / `~/.copilot` → Copilot-Usage-API | v3 |
 | **Cursor** | Monatskontingent, Usage-based-Kosten | Cursor-Anmeldung → Dashboard-API | v3 |
 | **Prepaid** (OpenRouter, DeepSeek, Moonshot, Fireworks) | Restguthaben, **echter** Betrag | API-Key aus Umgebungsvariable oder Schlüsselbund → Balance-Endpunkt | v3 |
+| **RTK-Ersparnis** | gesparte Tokens, Anteil, gefilterte Befehle je Zeitraum (alle Clients) | `rtk gain --format json --daily`, lokal aufgerufen (macOS: `/opt/homebrew/bin`, `/usr/local/bin`, `~/.cargo/bin`, `~/.local/bin`; Windows: `.cargo\bin`, `.local\bin`, `PATH`) | v2 ✅ |
 | **Verbrauch & API-Vergleichswert** | Tokens pro Tag und Modell (in/out/Cache) → Listenpreis-Gegenwert | `~/.claude/projects/**/*.jsonl` bzw. Session-Logs der CLI × mitgelieferte Preistabelle | v2 |
 
 ### Wichtige Randbedingungen

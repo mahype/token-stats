@@ -125,6 +125,10 @@ struct UsageView: View {
             .padding(.top, 8)
         }
 
+        if let rtk = consumption.rtk?[period] {
+            RtkBlock(summary: rtk)
+        }
+
         Text(footnote(summary))
             .font(.system(size: 10.5))
             .foregroundStyle(.secondary)
@@ -176,6 +180,44 @@ private struct Tile: View {
         .padding(.vertical, 9)
         .background(RoundedRectangle(cornerRadius: 8).fill(.background))
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.separator))
+    }
+}
+
+/// Ersparnis durch rtk im gewählten Zeitraum. rtk kennt den auslösenden Agent nicht,
+/// darum steht derselbe Block in jedem Tab und ohne Geldbetrag.
+private struct RtkBlock: View {
+    let summary: RtkSummary
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("RTK · alle Clients".uppercased())
+                .font(.system(size: 10))
+                .tracking(0.6)
+                .foregroundStyle(.secondary)
+            if summary.commands == 0 {
+                Text("Keine gefilterten Befehle in diesem Zeitraum.")
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(.secondary)
+            } else {
+                Text(saved)
+                    .font(.system(size: 13, weight: .bold))
+                Text("\(Format.number(Double(summary.commands), digits: 0)) Befehle gefiltert")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .monospacedDigit()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 11)
+        .padding(.vertical, 9)
+        .background(RoundedRectangle(cornerRadius: 8).fill(.background))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.separator))
+        .help("Aus rtk gain – Befehle aller Clients auf diesem Rechner")
+    }
+
+    private var saved: String {
+        let tokens = "\(Format.tokens(summary.savedTokens)) Tokens gespart"
+        return summary.savedFraction.map { "\(tokens) · \(Format.percent($0))" } ?? tokens
     }
 }
 
