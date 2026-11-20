@@ -55,13 +55,13 @@ struct UsageTimelineProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(for configuration: UsageConfigurationIntent, in context: Context) async -> UsageEntry {
-        let snapshot = context.isPreview ? DemoData.widgetSnapshot(now: .now) : WidgetSnapshot.load()
+        let snapshot = context.isPreview ? DemoData.widgetSnapshot(now: .now) : WidgetSnapshot.loadForWidgets()
         return UsageEntry(date: .now, snapshot: snapshot, provider: configuration.provider.providerID,
                           period: configuration.period.period)
     }
 
     func timeline(for configuration: UsageConfigurationIntent, in context: Context) async -> Timeline<UsageEntry> {
-        let entry = UsageEntry(date: .now, snapshot: WidgetSnapshot.load(), provider: configuration.provider.providerID,
+        let entry = UsageEntry(date: .now, snapshot: WidgetSnapshot.loadForWidgets(), provider: configuration.provider.providerID,
                                period: configuration.period.period)
         return Timeline(entries: [entry], policy: .never)
     }
@@ -78,7 +78,7 @@ struct UsageWidget: Widget {
         }
         .configurationDisplayName("Verbrauch")
         .description("Tokens und API-Vergleichswert für Heute, 7 Tage, 30 Tage oder den Abrechnungsmonat.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies(WidgetFamily.systemFamilies)
     }
 }
 

@@ -31,6 +31,14 @@ nicht lesbar (TCC). Widgets im Gerätetest: Mitteilungszentrale → „Widgets b
 „Token Stats“. Gemeinsamer Code von App und Erweiterung liegt im Paket
 `Packages/TokenStatsCore` (`swift build` dort baut ihn allein).
 
+iOS-App (Issue #11): `make ios` baut für den Simulator, `make ios-run` startet sie dort mit
+Demo-Werten zweier Macs (`TOKENSTATS_DEMO=1`; `TOKENSTATS_TAB=usage` für den zweiten Tab,
+Screenshot mit `xcrun simctl io booted screenshot`). Der echte Weg über CloudKit braucht
+den Container `iCloud.de.mahype.TokenStats` im Developer-Portal; die Mac-App bekommt die
+iCloud-Berechtigung nur mit `make build ICLOUD=1` bzw. `make release ICLOUD=1` (verlangt
+ein Provisioning-Profil, für Developer ID `PROVISIONING_PROFILE_SPECIFIER` mitgeben).
+Ohne sie ist „Stand nach iCloud übertragen“ in den Einstellungen ausgegraut.
+
 Die App cacht den letzten Stand in `~/Library/Application Support/TokenStats/state.json`
 und fragt nach einem Neustart erst nach Ablauf des Intervalls wieder ab — häufiges
 `make run` verbraucht also kein Rate-Limit. Das Verbrauchs-Aggregat liegt daneben in
@@ -68,8 +76,9 @@ ist nötig, sonst lehnt Apple die App wegen `get-task-allow` ab.
 
 ## Nächster Schritt
 
-Rest von v2 (SPEC.md §8): Mitteilungen bei 50/80/90 % und bei Reset (§5). Danach die
-iOS-Fassung (Issue #11) auf Basis von `TokenStatsCore` und dem Widget-Stand aus Issue #10.
+Rest von v2 (SPEC.md §8): Mitteilungen bei 50/80/90 % und bei Reset (§5). Für die
+iOS-Fassung (Issue #11) steht der Live-Test aus: Container anlegen, Developer-ID-Profil mit
+iCloud, TestFlight.
 
 ## Harte Randbedingungen
 

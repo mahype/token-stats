@@ -58,15 +58,18 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
 
     public var version: Int
     public var writtenAt: Date
+    /// Name des Macs, von dem der Stand kommt – gesetzt, wenn er über iCloud kam (Issue #11).
+    public var machine: String?
     /// Einstellung „API-Vergleichswert in Geld anzeigen“ – aus heißt: nur Tokens.
     public var showMoney: Bool
     /// Installierte Anbieter, alphabetisch wie die Tabs.
     public var providers: [Provider]
     public var usage: [Usage]
 
-    public init(writtenAt: Date = .now, showMoney: Bool, providers: [Provider], usage: [Usage]) {
+    public init(writtenAt: Date = .now, machine: String? = nil, showMoney: Bool, providers: [Provider], usage: [Usage]) {
         version = Self.currentVersion
         self.writtenAt = writtenAt
+        self.machine = machine
         self.showMoney = showMoney
         self.providers = providers
         self.usage = usage
@@ -101,20 +104,68 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
     /// `nil`, wenn die App noch nie geschrieben hat oder das Format nicht passt.
     public static func load(from url: URL? = fileURL) -> WidgetSnapshot? {
         guard let url, let data = try? Data(contentsOf: url) else { return nil }
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        guard let snapshot = try? decoder.decode(WidgetSnapshot.self, from: data),
-              snapshot.version == currentVersion else { return nil }
-        return snapshot
+        return decode(data)
+    }
+
+    /// Was die Widgets zeigen: auf dem Mac die Datei der App, auf dem iPhone der zuletzt
+    /// übertragene Mac aus dem iCloud-Cache.
+    public static func loadForWidgets() -> WidgetSnapshot? {
+        #if os(macOS)
+        load()
+        #else
+        SnapshotCache.load().first
+        #endif
     }
 
     public func write(to url: URL? = fileURL) throws {
         guard let url else { throw CocoaError(.fileNoSuchFile) }
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try jsonData().write(to: url, options: .atomic)
+    }
+
+    static var decoder: JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }
+
+    static var encoder: JSONEncoder {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.sortedKeys]
-        try encoder.encode(self).write(to: url, options: .atomic)
+        return encoder
+    }
+
+    public static func decode(_ data: Data) -> WidgetSnapshot? {
+        guard let snapshot = try? decoder.decode(WidgetSnapshot.self, from: data),
+              snapshot.version == currentVersion else { return nil }
+        return snapshot
+    }
+
+    public func jsonData() throws -> Data {
+        try Self.encoder.encode(self)
+    }
+}
+
+/// Stand mehrerer Macs auf dem iPhone, aus iCloud geholt und für App und Widgets in der App
+/// Group abgelegt – neuester Stand zuerst.
+public enum SnapshotCache {
+    public static let fileName = "machines.json"
+
+    public static var fileURL: URL? {
+        AppGroup.containerURL?.appending(path: fileName)
+    }
+
+    public static func load(from url: URL? = fileURL) -> [WidgetSnapshot] {
+        guard let url, let data = try? Data(contentsOf: url),
+              let machines = try? WidgetSnapshot.decoder.decode([WidgetSnapshot].self, from: data) else { return [] }
+        return machines.filter { $0.version == WidgetSnapshot.currentVersion }.sorted { $0.writtenAt > $1.writtenAt }
+    }
+
+    public static func write(_ machines: [WidgetSnapshot], to url: URL? = fileURL) throws {
+        guard let url else { throw CocoaError(.fileNoSuchFile) }
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try WidgetSnapshot.encoder.encode(machines).write(to: url, options: .atomic)
     }
 }
 

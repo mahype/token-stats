@@ -46,6 +46,19 @@ final class AppSettings {
     var billingDay: Int {
         didSet { defaults.set(billingDay, forKey: "billingDay") }
     }
+    /// Stand nach iCloud übertragen, für die iOS-App (Issue #11). Standard aus: „keine Cloud“
+    /// aus der README gilt weiter, solange niemand ein iPhone anbindet.
+    var cloudSync: Bool {
+        didSet { defaults.set(cloudSync, forKey: "cloudSync") }
+    }
+
+    /// Kennung dieses Macs für den iCloud-Datensatz – zufällig, einmal erzeugt, kein Hardware-Merkmal.
+    var machineID: String {
+        if let id = defaults.string(forKey: "machineID") { return id }
+        let id = UUID().uuidString
+        defaults.set(id, forKey: "machineID")
+        return id
+    }
 
     static let minimumInterval: TimeInterval = 300
 
@@ -56,6 +69,7 @@ final class AppSettings {
         refreshInterval = max(defaults.double(forKey: "refreshInterval"), Self.minimumInterval)
         showMoney = defaults.object(forKey: "showMoney") as? Bool ?? true
         billingDay = min(max(defaults.integer(forKey: "billingDay"), 1), 31)
+        cloudSync = defaults.bool(forKey: "cloudSync")
     }
 
     // Bei Anmeldung starten – Zustand liegt bei SMAppService, nicht in UserDefaults.

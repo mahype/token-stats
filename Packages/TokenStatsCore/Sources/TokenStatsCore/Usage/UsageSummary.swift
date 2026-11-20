@@ -13,6 +13,11 @@ public enum UsagePeriod: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
+    /// Für schmale Umschalter (iPhone).
+    public var shortLabel: String {
+        self == .billing ? "Abo-Monat" : label
+    }
+
     /// Erster und letzter Tag (einschließlich), lokale Zeit.
     public func range(now: Date = .now, billingDay: Int, calendar: Calendar = .current) -> (from: Date, through: Date) {
         let today = calendar.startOfDay(for: now)
@@ -107,26 +112,35 @@ public struct UsageSummary: Codable, Equatable, Sendable {
         return summary
     }
 
-    /// Mehrere Anbieter zusammengerechnet (Widget „Alle Anbieter“). Die Tagesreihen decken
-    /// denselben Zeitraum ab, darum lassen sie sich Tag für Tag addieren.
+    /// Mehrere Anbieter oder Macs zusammengerechnet (Widget „Alle Anbieter“, iPhone „Alle Macs“).
+    /// Gleiche Modelle werden addiert; die Tagesreihen decken denselben Zeitraum ab, darum
+    /// lassen sie sich Tag für Tag addieren.
     public static func merged(_ summaries: [UsageSummary]) -> UsageSummary {
         guard summaries.count > 1 else { return summaries.first ?? UsageSummary() }
         var result = UsageSummary()
+        var perModel: [String: ModelLine] = [:]
         var perDay: [Date: Int] = [:]
-        var dayOrder: [Date] = []
         for summary in summaries {
             result.total = result.total + summary.total
             result.value += summary.value
             result.hasUnpriced = result.hasUnpriced || summary.hasUnpriced
-            result.models += summary.models
-            for day in summary.days {
-                if perDay.updateValue(perDay[day.day, default: 0] + day.tokens, forKey: day.day) == nil {
-                    dayOrder.append(day.day)
+            for line in summary.models {
+                if let known = perModel[line.model] {
+                    perModel[line.model] = ModelLine(
+                        model: line.model, counts: known.counts + line.counts,
+                        value: known.value.flatMap { k in line.value.map { k + $0 } }
+                    )
+                } else {
+                    perModel[line.model] = line
                 }
             }
+            for day in summary.days {
+                perDay[day.day, default: 0] += day.tokens
+            }
         }
+        result.models = Array(perModel.values)
         result.sortModels()
-        result.days = dayOrder.sorted().map { DayTotal(day: $0, tokens: perDay[$0] ?? 0) }
+        result.days = perDay.keys.sorted().map { DayTotal(day: $0, tokens: perDay[$0] ?? 0) }
         return result
     }
 
