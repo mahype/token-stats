@@ -115,6 +115,19 @@ public enum DemoData {
         }
     }
 
+    /// 30 Tage rtk-Ersparnis, etwa ein Viertel der Befehlsausgaben gefiltert.
+    public static func rtk(now: Date, billingDay: Int, calendar: Calendar = .current) -> [UsagePeriod: RtkSummary] {
+        let pattern: [Double] = [0.8, 1.1, 0.6, 1.3, 0.2, 0, 0.4, 1.0, 1.2, 0.7, 1.5, 0.9, 0.1, 0,
+                                 0.9, 0.5, 1.4, 1.1, 0.6, 0.3, 0.1, 1.2, 0.8, 1.0, 1.7, 0.9, 0, 0.5, 1.3, 0.7]
+        let today = calendar.startOfDay(for: now)
+        let days = pattern.enumerated().map { index, factor in
+            let day = calendar.date(byAdding: .day, value: index - (pattern.count - 1), to: today)!
+            return RtkDay(day: UsageSummary.key(day, calendar), commands: Int(1_300 * factor),
+                          inputTokens: Int(1_250_000 * factor), savedTokens: Int(300_000 * factor))
+        }
+        return RtkSavings.summaries(days, now: now, billingDay: billingDay, calendar: calendar)
+    }
+
     /// Der komplette Widget-Stand mit Demo-Werten, für Vorschau und README.
     public static func widgetSnapshot(now: Date, prices: PriceTable = DemoData.prices, showMoney: Bool = true) -> WidgetSnapshot {
         let snapshots = snapshots(now: now)

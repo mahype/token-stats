@@ -181,3 +181,48 @@ import TokenStatsCore
         #expect(csv.contains("\nGesamt;;1000010;100005;100000;2000000;3200015\n"))
     }
 }
+
+@Suite struct RtkSavingsTests {
+    // Auszug aus `rtk gain --format json --daily` (rtk 1.1.0).
+    static let json = #"""
+    {"summary":{"total_commands":3,"total_saved":30},
+     "daily":[
+      {"date":"2026-11-18","commands":10,"input_tokens":1000,"output_tokens":800,"saved_tokens":200,"savings_pct":20.0},
+      {"date":"2026-11-19","commands":5,"input_tokens":400,"output_tokens":300,"saved_tokens":100,"savings_pct":25.0},
+      {"date":"2026-11-20","commands":2,"input_tokens":"x","saved_tokens":1},
+      {"date":"2026-11-20","commands":3,"input_tokens":600,"output_tokens":450,"saved_tokens":150,"savings_pct":25.0}
+     ]}
+    """#
+
+    @Test func parsesDailyAndSkipsIncompleteDays() throws {
+        let days = try #require(RtkSavings.parse(Data(Self.json.utf8)))
+        #expect(days.count == 3)
+        #expect(days.first == RtkDay(day: "2026-11-18", commands: 10, inputTokens: 1000, savedTokens: 200))
+    }
+
+    @Test func brokenOrMissingDailyIsNil() {
+        #expect(RtkSavings.parse(Data("kein json".utf8)) == nil)
+        #expect(RtkSavings.parse(Data(#"{"summary":{}}"#.utf8)) == nil)
+        #expect(RtkSavings.parse(Data(#"{"daily":[]}"#.utf8)) == [])
+    }
+
+    @Test func summaryRespectsRangeBounds() throws {
+        let days = try #require(RtkSavings.parse(Data(Self.json.utf8)))
+        let sum = RtkSavings.summary(days, from: "2026-11-19", through: "2026-11-20")
+        #expect(sum == RtkSummary(commands: 8, inputTokens: 1000, savedTokens: 250))
+        #expect(sum.savedFraction == 0.25)
+        #expect(RtkSavings.summary(days, from: "2026-11-21", through: "2026-11-22") == RtkSummary())
+        #expect(RtkSummary().savedFraction == nil)
+    }
+
+    @Test func summariesFollowUsagePeriods() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Europe/Berlin")!
+        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 11, day: 20, hour: 12)))
+        let days = try #require(RtkSavings.parse(Data(Self.json.utf8)))
+        let byPeriod = RtkSavings.summaries(days, now: now, billingDay: 19, calendar: calendar)
+        #expect(byPeriod[.today]?.savedTokens == 150)
+        #expect(byPeriod[.week]?.savedTokens == 450)
+        #expect(byPeriod[.billing]?.savedTokens == 250)
+    }
+}

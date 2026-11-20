@@ -30,7 +30,10 @@ struct Screenshots {
     /// Demo-Werte für Limits und Verbrauch; nichts wird abgefragt oder aus den Logs gelesen.
     func showDemo(now: Date = .now) {
         store.showDemo(Self.demoSnapshots(now: now))
-        consumption.showDemo(Self.demoUsage(now: now, billingDay: settings.billingDay, prices: consumption.prices))
+        consumption.showDemo(
+            Self.demoUsage(now: now, billingDay: settings.billingDay, prices: consumption.prices),
+            rtk: DemoData.rtk(now: now, billingDay: settings.billingDay)
+        )
     }
 
     private func capture(into directory: URL) async throws {
