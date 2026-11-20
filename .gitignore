@@ -10,3 +10,5 @@ windows/**/obj/
 .tbd/
 # Swift-Paket TokenStatsCore (swift build)
 Packages/*/.build/
+# Git-Worktrees der Skill-Kette (enon-tools)
+/.worktrees/
