@@ -27,7 +27,7 @@ static class Screenshots
                                    settings, cachePath: null);
         var consumption = new ConsumptionStore(settings, ledgerPath: null);
         store.ShowDemo(DemoSnapshots(now));
-        consumption.ShowDemo(DemoUsage(now, settings.BillingDay, consumption.Prices));
+        consumption.ShowDemo(DemoUsage(now, settings.BillingDay, consumption.Prices), DemoRtk(now, settings.BillingDay));
 
         foreach (var (suffix, dark) in new[] { ("light", false), ("dark", true) })
         {
@@ -208,6 +208,18 @@ static class Screenshots
                 FetchedAt = now.AddSeconds(-60),
             },
         };
+    }
+
+    /// <summary>30 Tage rtk-Ersparnis, etwa ein Viertel der Befehlsausgaben gefiltert.</summary>
+    public static Dictionary<UsagePeriod, RtkSummary> DemoRtk(DateTimeOffset now, int billingDay)
+    {
+        double[] pattern = [0.8, 1.1, 0.6, 1.3, 0.2, 0, 0.4, 1.0, 1.2, 0.7, 1.5, 0.9, 0.1, 0,
+                            0.9, 0.5, 1.4, 1.1, 0.6, 0.3, 0.1, 1.2, 0.8, 1.0, 1.7, 0.9, 0, 0.5, 1.3, 0.7];
+        var today = DateOnly.FromDateTime(now.LocalDateTime);
+        var days = pattern.Select((factor, index) => new RtkDay(
+            UsageSummary.Key(today.AddDays(index - (pattern.Length - 1))),
+            (long)(1_300 * factor), (long)(1_250_000 * factor), (long)(300_000 * factor))).ToList();
+        return RtkSavings.Summaries(days, today, billingDay);
     }
 
     /// <summary>30 Tage Verbrauch mit Wochenrhythmus; Cache-Anteil wie bei Claude Code üblich um 80 %.</summary>

@@ -93,6 +93,9 @@ public sealed class ConsumptionStore
 
     public event Action? Changed;
 
+    /// <summary>Ersparnis durch rtk je Zeitraum, über alle Clients; <c>null</c> = rtk nicht installiert oder nicht lesbar.</summary>
+    public Dictionary<UsagePeriod, RtkSummary>? Rtk { get; private set; }
+
     Dictionary<string, Dictionary<UsagePeriod, UsageSummary>> summaries = [];
     readonly UsageLedger? ledger;
     readonly AppSettings settings;
@@ -124,10 +127,11 @@ public sealed class ConsumptionStore
         summaries.TryGetValue(provider, out var byPeriod) && byPeriod.TryGetValue(period, out var summary) ? summary : null;
 
     /// <summary>Nur für Screenshots: feste Zusammenfassungen, ohne die Logs zu lesen.</summary>
-    public void ShowDemo(Dictionary<string, Dictionary<UsagePeriod, UsageSummary>> demo)
+    public void ShowDemo(Dictionary<string, Dictionary<UsagePeriod, UsageSummary>> demo, Dictionary<UsagePeriod, RtkSummary>? rtk = null)
     {
         timer?.Stop();
         summaries = demo;
+        Rtk = rtk;
         Changed?.Invoke();
     }
 
@@ -151,10 +155,11 @@ public sealed class ConsumptionStore
                     result[provider][period] = UsageSummary.Build(rows, from, through, Prices);
                 }
             }
-            return result;
+            var rtkDays = RtkSavings.Load();
+            return (result, rtk: rtkDays is null ? null : RtkSavings.Summaries(rtkDays, today, billingDay));
         }).ContinueWith(task =>
         {
-            if (task.IsCompletedSuccessfully) summaries = task.Result;
+            if (task.IsCompletedSuccessfully) (summaries, Rtk) = task.Result;
             else Failure ??= task.Exception?.GetBaseException().Message;
             IsScanning = false;
             Changed?.Invoke();

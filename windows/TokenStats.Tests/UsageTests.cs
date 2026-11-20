@@ -200,3 +200,53 @@ public sealed class LedgerTests : IDisposable
         }
     }
 }
+
+public class RtkSavingsTests
+{
+    // Auszug aus `rtk gain --format json --daily` (rtk 1.1.0).
+    const string Json = """
+        {"summary":{"total_commands":3,"total_saved":30},
+         "daily":[
+          {"date":"2026-11-18","commands":10,"input_tokens":1000,"output_tokens":800,"saved_tokens":200,"savings_pct":20.0},
+          {"date":"2026-11-19","commands":5,"input_tokens":400,"output_tokens":300,"saved_tokens":100,"savings_pct":25.0},
+          {"date":"2026-11-20","commands":2,"input_tokens":"x","saved_tokens":1},
+          {"date":"2026-11-20","commands":3,"input_tokens":600,"output_tokens":450,"saved_tokens":150,"savings_pct":25.0}
+         ]}
+        """;
+
+    [Fact]
+    public void ParsesDailyAndSkipsIncompleteDays()
+    {
+        var days = RtkSavings.Parse(Json)!;
+        Assert.Equal(3, days.Count);
+        Assert.Equal(new RtkDay("2026-11-18", 10, 1000, 200), days[0]);
+    }
+
+    [Fact]
+    public void BrokenOrMissingDailyIsNull()
+    {
+        Assert.Null(RtkSavings.Parse("kein json"));
+        Assert.Null(RtkSavings.Parse("""{"summary":{}}"""));
+        Assert.Empty(RtkSavings.Parse("""{"daily":[]}""")!);
+    }
+
+    [Fact]
+    public void SummaryRespectsRangeBounds()
+    {
+        var days = RtkSavings.Parse(Json)!;
+        var sum = RtkSavings.Summary(days, "2026-11-19", "2026-11-20");
+        Assert.Equal(new RtkSummary(8, 1000, 250), sum);
+        Assert.Equal(0.25, sum.SavedFraction);
+        Assert.Equal(new RtkSummary(), RtkSavings.Summary(days, "2026-11-21", "2026-11-22"));
+        Assert.Null(new RtkSummary().SavedFraction);
+    }
+
+    [Fact]
+    public void SummariesFollowUsagePeriods()
+    {
+        var byPeriod = RtkSavings.Summaries(RtkSavings.Parse(Json)!, new DateOnly(2026, 11, 20), 19);
+        Assert.Equal(150, byPeriod[UsagePeriod.Today].SavedTokens);
+        Assert.Equal(450, byPeriod[UsagePeriod.Week].SavedTokens);
+        Assert.Equal(250, byPeriod[UsagePeriod.Billing].SavedTokens);
+    }
+}
