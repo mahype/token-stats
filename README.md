@@ -1,3 +1,21 @@
+> [!CAUTION]
+> ## ⚠️ DEPRECATED – dieses Repository wird nicht mehr weiterentwickelt
+>
+> **Token Stats ist umgezogen: [github.com/toolwerk/token-stats](https://github.com/toolwerk/token-stats).**
+> Neue Issues, Pull Requests und Weiterentwicklung gehören dorthin. Dieses Repository bleibt nur
+> noch aus Kompatibilitätsgründen bestehen.
+>
+> - Der Quellcode und die vollständige Git-Historie (Branches und Tags) liegen unverändert im neuen Repository.
+> - **Nicht übertragen:** bestehende Issues, Pull Requests, Releases (Downloads) und GitHub Pages
+>   (Update-Feed der App). Diese bleiben vorerst hier, auch weil bereits ausgelieferte App-Versionen
+>   den Update-Feed `mahype.github.io/token-stats` und die Downloads von hier nutzen.
+>
+> *English: **DEPRECATED.** This project has moved to
+> [toolwerk/token-stats](https://github.com/toolwerk/token-stats). Please use the new repository for
+> issues, pull requests and development.*
+
+---
+
 # Token Stats
 
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-black.svg?logo=apple)](#voraussetzungen)
